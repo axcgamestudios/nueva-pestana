@@ -16,6 +16,23 @@ export type Game = {
 
 export const games: Game[] = [
   {
+    id: "kingdom-forgotten-seas",
+    title: "Kingdom of the Forgotten Seas",
+    tagline: "Un reino perdido espera en el horizonte",
+    description:
+      "Zarpa hacia un mundo abierto medieval lleno de islas misteriosas, castillos ancestrales y tesoros hundidos. El mar reclama su trono.",
+    longDescription:
+      "Kingdom of the Forgotten Seas te entrega un velero y un reino entero para conquistar. Explora un archipiélago medieval de mundo abierto donde cada isla guarda ruinas, aldeas y leyendas propias. Negocia con reinos rivales, libra batallas navales, saquea barcos mercantes y desentierra tesoros olvidados bajo las olas. Mejora tu navío, recluta una tripulación leal y levanta tu propio castillo frente al mar mientras descubres qué hundió al antiguo reino que dio nombre a estas aguas. La aventura es tuya: cada horizonte es una promesa y cada tormenta, una prueba.",
+    cover: "/games/kingdom-forgotten-seas.png",
+    url: "https://axcgamestudios.github.io/KFS/",
+    categories: ["Aventura", "Acción"],
+    tags: ["Mundo abierto", "Medieval", "Barcos", "RPG"],
+    rating: 4.9,
+    players: "187K",
+    difficulty: "Media",
+    accent: "#38bdf8",
+  },
+  {
     id: "velocity-gp",
     title: "Velocity GP",
     tagline: "El campeonato de F1 definitivo",
@@ -24,7 +41,7 @@ export const games: Game[] = [
     longDescription:
       "Velocity GP te pone al volante de un bólido de Fórmula 1 de altas prestaciones. Domina cada sector del circuito, frena en el último metro posible, administra el agarre de tus neumáticos y adelanta a tus rivales en curvas imposibles. Con una física de conducción exigente y un manejo preciso, cada décima cuenta en tu camino hacia lo más alto del podio. Ajusta tu línea de carrera, encadena vueltas perfectas y conviértete en el campeón mundial de la temporada.",
     cover: "/games/velocity-gp.png",
-    url: "https://googlesitecom.github.io/googleslides/",
+    url: "https://axcgamestudios.github.io/googleslides/",
     categories: ["Carreras"],
     tags: ["F1", "Velocidad", "Circuito", "Contrarreloj"],
     rating: 4.9,
@@ -41,7 +58,7 @@ export const games: Game[] = [
     longDescription:
       "Emergency Strike es un juego de disparos de acción intensa donde cada misión pone a prueba tus nervios. Infíltrate en escenarios urbanos hostiles, cubre tus ángulos, administra la munición y elimina objetivos tácticos bajo presión. Las oleadas enemigas se vuelven más letales en cada round, así que mejora tu equipamiento, perfecciona tu puntería y mantén la calma cuando el caos estalle. Solo los operativos más fríos sobreviven a la última misión.",
     cover: "/games/emergency-strike.png",
-    url: "https://googlesitecom.github.io/Googlecom/",
+    url: "https://axcgamestudios.github.io/Googlecom/",
     categories: ["Disparos", "Acción"],
     tags: ["FPS", "Táctico", "Misiones", "Oleadas"],
     rating: 4.8,
@@ -58,7 +75,7 @@ export const games: Game[] = [
     longDescription:
       "Apex Kart es el corredor de karts definitivo: elige tu piloto, toma cada curva en derrape para cargar tu turbo y lanza objetos para dejar atrás a tus rivales. Descubre atajos secretos, salta rampas imposibles y aprovecha cada potenciador del camino. Las carreras son caóticas y cualquier cosa puede pasar hasta la última vuelta: un misil bien lanzado puede cambiarte la victoria. Fácil de jugar, difícil de dominar.",
     cover: "/games/apex-kart.png",
-    url: "https://googlesitecom.github.io/gmail/",
+    url: "https://axcgamestudios.github.io/gmail/",
     categories: ["Carreras", "Casual"],
     tags: ["Karts", "Arcade", "Derrapes", "Objetos"],
     rating: 4.7,
@@ -92,7 +109,7 @@ export const games: Game[] = [
     longDescription:
       "Jeffcraft te abandona en un mundo de bloques generado al infinito donde cada montaña, cueva y bosque puede explorarse y destruirse. Recoge madera, piedra y minerales raros para fabricar herramientas cada vez mejores, construye tu refugio antes de que caiga la noche y defiéndelo de todo lo que se mueve en la oscuridad. Sueldos bloques para levantar desde una cabaña humilde hasta un castillo imposible, experimenta con granjas automáticas y redstone, o simplemente recorre el mapa en busca de aldeas y tesoros enterrados. Un sandbox puro donde tú pones las reglas y la creatividad es el único límite.",
     cover: "/games/jeffcraft.png",
-    url: "https://googlesitecom.github.io/Google-Classroom/",
+    url: "https://axcgamestudios.github.io/Google-Classroom/",
     categories: ["Sandbox", "Supervivencia"],
     tags: ["Voxel", "Construcción", "Minería", "Mundo abierto"],
     rating: 4.9,
@@ -109,7 +126,7 @@ export const games: Game[] = [
     longDescription:
       "Grand Theft Voxel mezcla la libertad del crimen a mundo abierto con un universo completamente construido en bloques. Roba cualquier coche que encuentres en la calle, siembra el pánico mientras las estrellas de búsqueda se acumulan y la policía te persigue por toda la ciudad. Salta entre edificios cuadrados, descubre atajos por los callejones y usa el entorno destructible a tu favor: si un bloque estorba, simplemente rompe y abre tu propio camino. Explora libremente la ciudad, cumple misiones y conviértete en el criminal más buscado del mundo voxel.",
     cover: "/games/grand-theft-voxel.png",
-    url: "https://googlesitecom.github.io/GTV/",
+    url: "https://axcgamestudios.github.io/GTV/",
     categories: ["Acción", "Sandbox"],
     tags: ["Mundo abierto", "Voxel", "Coches", "Policía"],
     rating: 4.9,
@@ -124,6 +141,7 @@ export const allCategories = [
   "Carreras",
   "Disparos",
   "Acción",
+  "Aventura",
   "Sandbox",
   "Supervivencia",
   "Casual",

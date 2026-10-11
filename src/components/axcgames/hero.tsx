@@ -34,7 +34,7 @@ export default function Hero({
         <div className="relative h-[500px] w-full sm:h-[440px] lg:h-[520px]">
           <Image
             src={asset(game.cover)}
-            alt={`Portada de ${game.title}, juego de carreras de Fórmula 1`}
+            alt={`Portada de ${game.title}`}
             fill
             priority
             sizes="100vw"
