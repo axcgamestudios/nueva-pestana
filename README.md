@@ -1,6 +1,6 @@
 # nueva-pestaña · axcgames
 
-Portal de juegos estilo Poki con tema dark premium: juega dentro de la página y chatea con amigos **sin servidor** — todo funciona desplegado en [GitHub Pages](https://googlesitecom.github.io/nueva-pestana/).
+Portal de juegos estilo Poki con tema dark premium: juega dentro de la página y chatea con amigos **sin servidor** — todo funciona desplegado en [GitHub Pages](https://axcgamestudios.github.io/nueva-pestana/).
 
 ## Qué incluye
 

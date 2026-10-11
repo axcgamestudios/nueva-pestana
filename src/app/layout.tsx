@@ -22,10 +22,10 @@ const orbitron = Orbitron({
 const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://googlesitecom.github.io/nueva-pestana"),
+  metadataBase: new URL("https://axcgamestudios.github.io/nueva-pestana"),
   title: "nueva-pestaña",
   description:
-    "Tu página de inicio: juegos, chat y amigos. Velocity GP, Emergency Strike, Apex Kart, Zona Cero y Jeffcraft. Sin descargas, juega al instante en tu navegador.",
+    "Tu página de inicio: juegos, chat y amigos. Kingdom of the Forgotten Seas, Velocity GP, Emergency Strike, Apex Kart, Zona Cero, Jeffcraft y Grand Theft Voxel. Sin descargas, juega al instante en tu navegador.",
   keywords: [
     "juegos",
     "juegos gratis",

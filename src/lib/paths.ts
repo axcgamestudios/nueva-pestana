@@ -2,7 +2,7 @@
  * Utilidades de rutas para GitHub Pages.
  *
  * El sitio se sirve bajo un subdirectorio
- * (https://googlesitecom.github.io/nueva-pestana/), así que todo asset
+ * (https://axcgamestudios.github.io/nueva-pestana/), así que todo asset
  * público referenciado con una ruta absoluta debe llevar el prefijo
  * NEXT_PUBLIC_BASE_PATH (definido al compilar en el workflow de Pages).
  *
