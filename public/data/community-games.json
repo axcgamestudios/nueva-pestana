@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "id": "formula-1-qoio",
+    "title": "Formula 1",
+    "tagline": "Videojuego de f1",
+    "description": "Videojuego de f1",
+    "longDescription": "Videojuego de f1 Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/formula-1-qoio.jpg",
+    "url": "https://youtube.com/shorts/r0iKz2p3EOg?si=XWakQ_Wv3DEIb1U6",
+    "categories": [
+      "Carreras"
+    ],
+    "tags": [
+      "Carreras",
+      "Comunidad"
+    ],
+    "rating": 4.7,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#a78bfa"
+  }
+]
