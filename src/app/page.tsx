@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Gamepad2, SearchX, ShieldCheck, Trophy, Zap } from "lucide-react";
 import { allCategories, featuredGame, games, type Game } from "@/lib/games";
+import { fetchCommunityGames } from "@/lib/community-games";
 import { useAxStore } from "@/lib/store";
 import Header from "@/components/axcgames/header";
 import Hero from "@/components/axcgames/hero";
@@ -15,6 +16,7 @@ import AnimatedBg from "@/components/axcgames/animated-bg";
 import NotificationWatcher from "@/components/axcgames/notification-watcher";
 import ChatApp from "@/components/axcgames/chat/chat-app";
 import CallLayer from "@/components/axcgames/chat/call-overlay";
+import DevPanel from "@/components/axcgames/dev-panel";
 import { useToast } from "@/hooks/use-toast";
 
 const FAV_KEY = "axcgames:favorites";
@@ -43,6 +45,7 @@ export default function Home() {
   const [category, setCategory] = useState("Todos");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
+  const [communityGames, setCommunityGames] = useState<Game[]>([]);
   const { toast } = useToast();
 
   // Cargar sesión al arrancar
@@ -61,6 +64,26 @@ export default function Home() {
       openChat();
     }
   }, [me, view, openChat]);
+
+  // Catálogo comunitario (juegos publicados desde el panel interno)
+  useEffect(() => {
+    let alive = true;
+    fetchCommunityGames()
+      .then((list) => {
+        if (alive) setCommunityGames(list);
+      })
+      .catch(() => {
+        /* sin catálogo comunitario disponible */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const allGames = useMemo(
+    () => [...games, ...communityGames],
+    [communityGames]
+  );
 
   // Cargar favoritos y recientes desde localStorage (tras el montaje)
   useEffect(() => {
@@ -85,7 +108,7 @@ export default function Home() {
         } catch {
           /* ignorar */
         }
-        const g = games.find((x) => x.id === id);
+        const g = allGames.find((x) => x.id === id);
         toast({
           description: isFav
             ? `${g?.title ?? "Juego"} eliminado de favoritos`
@@ -94,7 +117,7 @@ export default function Home() {
         return next;
       });
     },
-    [toast]
+    [toast, allGames]
   );
 
   const handleOpenGame = useCallback(
@@ -135,7 +158,7 @@ export default function Home() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return games.filter((g) => {
+    return allGames.filter((g) => {
       const inCategory = category === "Todos" || g.categories.includes(category);
       const inQuery =
         !q ||
@@ -145,22 +168,22 @@ export default function Home() {
         g.tags.some((t) => t.toLowerCase().includes(q));
       return inCategory && inQuery;
     });
-  }, [category, query]);
+  }, [category, query, allGames]);
 
   const recentGames = useMemo(
     () =>
       recent
-        .map((id) => games.find((g) => g.id === id))
+        .map((id) => allGames.find((g) => g.id === id))
         .filter((g): g is Game => Boolean(g)),
-    [recent]
+    [recent, allGames]
   );
 
   const favoriteGames = useMemo(
     () =>
       favorites
-        .map((id) => games.find((g) => g.id === id))
+        .map((id) => allGames.find((g) => g.id === id))
         .filter((g): g is Game => Boolean(g)),
-    [favorites]
+    [favorites, allGames]
   );
 
   return (
@@ -190,7 +213,7 @@ export default function Home() {
           <GameView
             key={activeGame.id}
             game={activeGame}
-            others={games.filter((g) => g.id !== activeGame.id)}
+            others={allGames.filter((g) => g.id !== activeGame.id)}
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
             onClose={goHome}
@@ -222,7 +245,7 @@ export default function Home() {
               className="mt-8 overflow-hidden border-y border-white/5 bg-white/[0.02] py-3.5"
             >
               <div className="axc-marquee flex w-max items-center gap-12">
-                {[...games, ...games].map((g, i) => (
+                {[...allGames, ...allGames].map((g, i) => (
                   <span
                     key={`${g.id}-mq-${i}`}
                     className="flex items-center gap-12 whitespace-nowrap font-display text-xs font-bold uppercase tracking-[0.35em] text-white/40"
@@ -402,6 +425,8 @@ export default function Home() {
 
       {/* Llamadas activas (sobre cualquier vista) */}
       {me && <CallLayer />}
+
+      <DevPanel />
     </div>
   );
 }
