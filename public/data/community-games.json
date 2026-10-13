@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "id": "geometry-dash-dutp",
+    "title": "Geometry Dash",
+    "tagline": ".",
+    "description": ".",
+    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/geometry-dash-dutp.jpg",
+    "url": "https://axcgamestudios.github.io/gdsh/",
+    "categories": [
+      "Carreras"
+    ],
+    "tags": [
+      "Carreras",
+      "Comunidad"
+    ],
+    "rating": 4.6,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#38bdf8"
+  }
+]
