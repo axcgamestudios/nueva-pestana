@@ -559,6 +559,7 @@ export const useAxStore = create<AxState>((set, get) => ({
     set({
       me: null,
       view: "home",
+      activeGame: null,
       friends: [],
       incoming: [],
       outgoing: [],
@@ -576,7 +577,9 @@ export const useAxStore = create<AxState>((set, get) => ({
   },
 
   goHome: () => {
-    set({ view: "home" });
+    // Al volver al inicio se descarta el "juego pendiente" (si se pedía cuenta
+    // para jugar) para que un login posterior no lo reabra por sorpresa
+    set({ view: "home", activeGame: null });
     window.scrollTo({ top: 0, behavior: "auto" });
   },
 

@@ -24,7 +24,7 @@ const RECENT_KEY = "axcgames:recent";
 
 const FEATURE_STRIP = [
   { icon: Zap, title: "Al instante", sub: "Sin descargas ni instalaciones" },
-  { icon: ShieldCheck, title: "100% gratis", sub: "Sin registros ni pagos" },
+  { icon: ShieldCheck, title: "100% gratis", sub: "Crea tu cuenta en segundos" },
   { icon: Gamepad2, title: "Chat en vivo", sub: "Amigos, grupos y llamadas" },
   { icon: Trophy, title: "Supera tu récord", sub: "Compite contra ti mismo" },
 ];
@@ -58,12 +58,8 @@ export default function Home() {
     if (me) connect();
   }, [me, connect]);
 
-  // Tras login/registro desde la vista auth, ir al chat
-  useEffect(() => {
-    if (me && view === "auth") {
-      openChat();
-    }
-  }, [me, view, openChat]);
+  // Tras login/registro desde la vista auth: si intentaba jugar a algo, abrirlo;
+  // si no, ir al chat (definido tras handleOpenGame, ver más abajo)
 
   // Catálogo comunitario (juegos publicados desde el panel interno)
   useEffect(() => {
@@ -122,6 +118,13 @@ export default function Home() {
 
   const handleOpenGame = useCallback(
     (game: Game) => {
+      // Cuenta obligatoria: sin sesión se pide entrar/registrarse y se
+      // recuerda el juego para abrirlo justo después del login
+      if (!useAxStore.getState().me) {
+        useAxStore.setState({ activeGame: game });
+        useAxStore.getState().openAuth();
+        return;
+      }
       openGame(game);
       setRecent((prev) => {
         const next = [game.id, ...prev.filter((r) => r !== game.id)].slice(0, 4);
@@ -135,6 +138,20 @@ export default function Home() {
     },
     [openGame]
   );
+
+  // Tras login/registro desde la vista auth: si intentaba jugar a algo,
+  // abrirlo justo después; si no, ir al chat
+  useEffect(() => {
+    if (me && view === "auth") {
+      const pending = useAxStore.getState().activeGame;
+      if (pending) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- transición única tras login (mismo patrón que la hidratación de preferencias)
+        handleOpenGame(pending);
+      } else {
+        openChat();
+      }
+    }
+  }, [me, view, openChat, handleOpenGame]);
 
   // ESC cierra el juego (cuando no está en pantalla completa)
   useEffect(() => {
@@ -353,7 +370,7 @@ export default function Home() {
                     onClick={() => useAxStore.getState().openAuth()}
                     className="rounded-full border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-xs font-bold text-amber-300 transition hover:bg-amber-400/20"
                   >
-                    Crea tu cuenta y chatea con amigos
+                    Crea tu cuenta para jugar y chatear
                   </button>
                 )}
               </div>

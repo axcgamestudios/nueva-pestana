@@ -6,7 +6,6 @@ import { asset } from "@/lib/paths";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
-  ExternalLink,
   Gamepad2,
   Heart,
   Keyboard,
@@ -34,33 +33,17 @@ function ControlButton({
   label,
   onClick,
   active = false,
-  href,
 }: {
   children: ReactNode;
   label: string;
   onClick?: () => void;
   active?: boolean;
-  href?: string;
 }) {
   const className = `flex h-9 w-9 items-center justify-center rounded-full border transition active:scale-90 ${
     active
       ? "border-amber-400/60 bg-amber-400/15 text-amber-400"
       : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
   }`;
-  if (href) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        title={label}
-        aria-label={label}
-        className={className}
-      >
-        {children}
-      </a>
-    );
-  }
   return (
     <button type="button" onClick={onClick} title={label} aria-label={label} className={className}>
       {children}
@@ -141,9 +124,6 @@ export default function GameView({
             </ControlButton>
             <ControlButton label="Reiniciar juego" onClick={reloadGame}>
               <RotateCcw className="h-4 w-4" />
-            </ControlButton>
-            <ControlButton label="Abrir en una pestaña nueva" href={game.url}>
-              <ExternalLink className="h-4 w-4" />
             </ControlButton>
             <ControlButton
               label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
@@ -273,7 +253,8 @@ export default function GameView({
               </h3>
               <p className="mt-2.5 text-sm leading-relaxed text-white/65">
                 Usa el botón de pantalla completa para una experiencia totalmente inmersiva y
-                el de reinicio si quieres empezar la partida de cero.
+                el de reinicio si quieres empezar la partida de cero. Todos los juegos se
+                juegan aquí dentro, sin salir de axcgames.
               </p>
             </div>
           </aside>

@@ -737,7 +737,6 @@ export default function DevPanel() {
                           key={g.id}
                           className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-2.5"
                         >
-                          { }
                           <img
                             src={`${RAW_ROOT}${g.cover}?t=${Date.now()}`}
                             alt=""
@@ -745,7 +744,9 @@ export default function DevPanel() {
                           />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-bold text-white">{g.title}</p>
-                            <p className="truncate text-xs text-white/40">{g.url}</p>
+                            <p className="truncate text-xs text-white/40">
+                              {g.categories?.[0] ?? "Comunidad"} · {g.description || "Sin descripción"}
+                            </p>
                           </div>
                           {confirmDelete === g.id ? (
                             <button

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { asset } from "@/lib/paths";
 import { motion } from "framer-motion";
-import { ArrowLeft, KeyRound, Loader2, LogIn, UserPlus } from "lucide-react";
+import { KeyRound, Loader2, LogIn, UserPlus } from "lucide-react";
 import { useAxStore } from "@/lib/store";
 
 export default function AuthScreen() {
@@ -14,7 +14,9 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { login, register, goHome } = useAxStore();
+  const { login, register } = useAxStore();
+  // Juego pendiente: el visitante intentó jugar sin cuenta
+  const activeGame = useAxStore((s) => s.activeGame);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,9 +63,13 @@ export default function AuthScreen() {
               <span className="text-amber-400">GAMES</span>
             </h1>
             <p className="mt-1.5 text-sm text-white/50">
-              {mode === "login"
-                ? "Bienvenido de nuevo. Entra para chatear y jugar."
-                : "Crea tu cuenta gratis. Sin email, sin complicaciones."}
+              {activeGame
+                ? mode === "login"
+                  ? `Entra a tu cuenta para jugar a ${activeGame.title}.`
+                  : `Crea tu cuenta gratis y juega a ${activeGame.title}.`
+                : mode === "login"
+                  ? "Bienvenido de nuevo. Entra para chatear y jugar."
+                  : "Crea tu cuenta gratis. Sin email, sin complicaciones."}
             </p>
           </div>
 
@@ -179,20 +185,11 @@ export default function AuthScreen() {
             </button>
 
             <p className="text-center text-xs leading-relaxed text-white/40">
-              Solo necesitas usuario y contraseña. Tus amigos te encontrarán por tu
-              nombre de usuario.
+              Necesitas una cuenta para jugar y chatear. Solo usuario y contraseña,
+              sin email; tus amigos te encontrarán por tu nombre de usuario.
             </p>
           </form>
         </div>
-
-        <button
-          type="button"
-          onClick={goHome}
-          className="mx-auto mt-6 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm text-white/60 transition hover:border-white/25 hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Seguir jugando sin cuenta
-        </button>
       </motion.div>
     </main>
   );
