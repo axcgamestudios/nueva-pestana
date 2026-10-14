@@ -38,5 +38,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#f97316"
+  },
+  {
+    "id": "retro-bowl-ot5i",
+    "title": "Retro bowl",
+    "tagline": ".",
+    "description": ".",
+    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/retro-bowl-ot5i.jpg",
+    "url": "https://axcgamestudios.github.io/rb1/",
+    "categories": [
+      "Casual"
+    ],
+    "tags": [
+      "Casual",
+      "Comunidad"
+    ],
+    "rating": 4.6,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#eab308"
   }
 ]
