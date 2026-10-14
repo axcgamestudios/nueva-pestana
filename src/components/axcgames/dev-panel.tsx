@@ -26,18 +26,20 @@ import {
   X,
 } from "lucide-react";
 import { allCategories, type Game } from "@/lib/games";
+import DevPanelPlaytime from "./dev-panel-playtime";
 
 /* ------------------------------------------------------------------ */
 /* Configuración                                                       */
 /* ------------------------------------------------------------------ */
 
 const REPO = "axcgamestudios/nueva-pestana";
+export const PT_JSON_PATH = "public/data/playtime-config.json";
 const API_ROOT = "https://api.github.com";
 const JSON_PATH = "public/data/community-games.json";
 const IMG_DIR = "public/games/community";
 const RAW_ROOT = `https://raw.githubusercontent.com/${REPO}/main`;
 
-const TOKEN_KEY = "axcgames:dev-token";
+export const TOKEN_KEY = "axcgames:dev-token";
 /** SHA-256 de la contraseña (no se guarda en texto plano). */
 const PASSWORD_SHA256 = "21429fa2e2effc01f6cb00de5cd00878495836dbb3c405a1dcb21d8803be10a4";
 
@@ -47,6 +49,7 @@ const COVER_H = 768;
 const ACCENTS = ["#f97316", "#22c55e", "#38bdf8", "#a78bfa", "#ec4899", "#eab308"];
 
 type Phase = "closed" | "password" | "token" | "ready";
+type PanelTab = "juegos" | "stats" | "limits";
 
 /* ------------------------------------------------------------------ */
 /* Utilidades                                                          */
@@ -60,7 +63,7 @@ async function sha256Hex(text: string): Promise<string> {
     .join("");
 }
 
-function utf8ToBase64(text: string): string {
+export function utf8ToBase64(text: string): string {
   const bytes = new TextEncoder().encode(text);
   let bin = "";
   bytes.forEach((b) => {
@@ -89,7 +92,7 @@ function slugify(text: string): string {
 
 type GhError = Error & { status?: number };
 
-async function ghRequest<T>(
+export async function ghRequest<T>(
   path: string,
   token: string,
   init: { method?: string; body?: Record<string, unknown> } = {}
@@ -120,6 +123,11 @@ interface GhContent {
   content?: string;
 }
 
+export interface GhContentRef {
+  sha: string;
+  content?: string;
+}
+
 interface GhRef {
   object?: { sha?: string };
 }
@@ -140,7 +148,7 @@ interface TreeEntry {
 }
 
 /** Sube el contenido (base64) como blob y devuelve su SHA. */
-async function createBlob(token: string, b64: string): Promise<string> {
+export async function createBlob(token: string, b64: string): Promise<string> {
   const blob = await ghRequest<GhBlob>(`/repos/${REPO}/git/blobs`, token, {
     method: "POST",
     body: { content: b64, encoding: "base64" },
@@ -160,7 +168,7 @@ async function createBlob(token: string, b64: string): Promise<string> {
  * Las entradas con sha: null borran el fichero del árbol (para eliminar
  * portadas al quitar un juego).
  */
-async function commitFiles(
+export async function commitFiles(
   token: string,
   message: string,
   entries: TreeEntry[]
@@ -251,6 +259,7 @@ async function fileToCoverBase64(file: File): Promise<string> {
 
 export default function DevPanel() {
   const [phase, setPhase] = useState<Phase>("closed");
+  const [tab, setTab] = useState<PanelTab>("juegos");
   const [pwd, setPwd] = useState("");
   const [pwdError, setPwdError] = useState("");
   const [token, setToken] = useState("");
@@ -304,6 +313,7 @@ export default function DevPanel() {
 
   const close = useCallback(() => {
     setPhase("closed");
+    setTab("juegos");
     setPwd("");
     setPwdError("");
     setError("");
@@ -554,7 +564,10 @@ export default function DevPanel() {
           transition={{ type: "spring", stiffness: 320, damping: 26 }}
           role="dialog"
           aria-modal="true"
-          className="flex max-h-[88dvh] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0a0a0a] shadow-2xl shadow-black"
+          className={
+            "flex max-h-[88dvh] w-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0a0a0a] shadow-2xl shadow-black transition-[max-width] duration-200 sm:max-w-xl " +
+            (phase === "ready" && tab !== "juegos" ? "sm:max-w-3xl" : "")
+          }
         >
           {/* Cabecera */}
           <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
@@ -571,7 +584,7 @@ export default function DevPanel() {
                   ? "ACCESO RESTRINGIDO"
                   : phase === "token"
                     ? "CONFIGURAR ACCESO"
-                    : "GESTOR DE JUEGOS"}
+                    : "PANEL DE ADMINISTRACIÓN"}
               </h2>
             </div>
             <button
@@ -672,6 +685,35 @@ export default function DevPanel() {
 
             {phase === "ready" && (
               <div className="space-y-6">
+                {/* Pestañas */}
+                <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Secciones del panel">
+                  {([
+                    ["juegos", "Juegos"],
+                    ["stats", "Estadísticas"],
+                    ["limits", "Límites de tiempo"],
+                  ] as const).map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      aria-selected={tab === id}
+                      onClick={() => setTab(id)}
+                      className={`rounded-full border px-4 py-1.5 text-xs font-bold tracking-wide transition active:scale-95 ${
+                        tab === id
+                          ? "border-amber-400 bg-amber-400 text-black"
+                          : "border-white/10 bg-white/5 text-white/60 hover:border-white/25 hover:text-white"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {tab === "stats" && <DevPanelPlaytime mode="stats" />}
+                {tab === "limits" && <DevPanelPlaytime mode="limits" />}
+
+                {tab === "juegos" && (
+                  <>
                 {/* Formulario */}
                 <form onSubmit={submit} className="space-y-4">
                   <div>
@@ -868,6 +910,8 @@ export default function DevPanel() {
                   Cada publicación se guarda en el repositorio y GitHub Pages reconstruye el
                   sitio en ~2 minutos; después el juego aparece para todos los visitantes.
                 </p>
+                  </>
+                )}
               </div>
             )}
           </div>

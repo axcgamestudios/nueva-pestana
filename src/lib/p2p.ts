@@ -17,6 +17,7 @@
 
 import type { Room } from "trystero/nostr";
 import type { AxConversation, AxMessage, AxUser } from "./store";
+import { buildStatsPayload, ingestPeerStats, type PlaytimeStats } from "./playtime";
 
 const APP_ID = "axcgames-nueva-pestana-v1";
 export const LOBBY_ROOM = "lobby";
@@ -25,6 +26,12 @@ export const LOBBY_ROOM = "lobby";
 const PRESENCE_HEARTBEAT_MS = 20_000;
 /** Tiempo máximo que sendFriendRequest espera a que aparezca el par. */
 export const PEER_DISCOVERY_TIMEOUT_MS = 12_000;
+
+/** Carga útil de la acción "pstat": identidad + resumen de tiempo jugado. */
+interface StatsPayload {
+  user: AxUser;
+  stats: PlaytimeStats;
+}
 
 export type P2pEvent =
   | { type: "peer-online"; user: AxUser }
@@ -124,12 +131,18 @@ export async function startP2P(user: AxUser): Promise<void> {
       pendingRooms.clear();
       // Heartbeat: reanuncia la identidad periódicamente para que ningún par
       // se quede sin saber quiénes somos (repara mensajes de identidad perdidos
-      // y acelera el descubrimiento en presencia mutua).
+      // y acelera el descubrimiento en presencia mutua). Junto con la identidad
+      // viaja el resumen de tiempo jugado (pstat) para que quien esté conectado
+      // (p. ej. el panel de administración) tenga estadísticas frescas.
       if (heartbeatTimer) clearInterval(heartbeatTimer);
       heartbeatTimer = setInterval(() => {
         const lobby = rooms.get(LOBBY_ROOM);
         if (!lobby || !me) return;
         void send(LOBBY_ROOM, "id", me);
+        void send(LOBBY_ROOM, "pstat", {
+          user: me,
+          stats: buildStatsPayload(me.id),
+        } satisfies StatsPayload);
       }, PRESENCE_HEARTBEAT_MS);
       // Exponer estado para diagnóstico (solo desarrollo)
       if (typeof window !== "undefined") {
@@ -303,6 +316,7 @@ function ensureRoom(roomId: string): Room | null {
   const crejAct = room.makeAction<{ c: string; from: AxUser }>("crej");
   const cendAct = room.makeAction<{ c: string; from: AxUser }>("cend");
   const ctogAct = room.makeAction<{ c: string; from: AxUser; a: boolean; v: boolean }>("ctog");
+  const pstatAct = room.makeAction<StatsPayload>("pstat");
 
   actionsByRoom.set(roomId, {
     id: idAct,
@@ -319,10 +333,18 @@ function ensureRoom(roomId: string): Room | null {
     crej: crejAct,
     cend: cendAct,
     ctog: ctogAct,
+    pstat: pstatAct,
   });
 
   room.onPeerJoin = (peerId) => {
     void idAct.send(me as AxUser, { target: peerId });
+    // En el lobby, además, entregar nuestras estadísticas al recién llegado
+    if (roomId === LOBBY_ROOM && me) {
+      void pstatAct.send(
+        { user: me, stats: buildStatsPayload(me.id) } satisfies StatsPayload,
+        { target: peerId }
+      );
+    }
   };
 
   room.onPeerLeave = (peerId) => {
@@ -418,6 +440,13 @@ function ensureRoom(roomId: string): Room | null {
       audio: d.a,
       video: d.v,
     });
+  };
+
+  // Estadísticas de tiempo jugado de otro usuario: se guardan en la caché
+  // local (última conocida por par) para el panel de administración.
+  pstatAct.onMessage = (d) => {
+    if (!d?.user || d.user.id === me?.id) return;
+    ingestPeerStats(d.user, d.stats);
   };
 
   return room;

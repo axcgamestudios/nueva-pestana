@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "observationStart": "2026-10-15",
+  "enforcementStart": "2026-11-01",
+  "defaultMonthlyLimitMinutes": 600,
+  "users": {}
+}
