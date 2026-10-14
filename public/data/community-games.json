@@ -58,5 +58,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#eab308"
+  },
+  {
+    "id": "fnaf-2-cf18",
+    "title": "FNAF 2",
+    "tagline": "..",
+    "description": "..",
+    "longDescription": ".. Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/fnaf-2-cf18.jpg",
+    "url": "https://axcgamestudios.github.io/FN2/",
+    "categories": [
+      "Supervivencia"
+    ],
+    "tags": [
+      "Supervivencia",
+      "Comunidad"
+    ],
+    "rating": 4.8,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#eab308"
   }
 ]
