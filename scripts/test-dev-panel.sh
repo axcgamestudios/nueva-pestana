@@ -29,6 +29,8 @@ curl -s -o /dev/null -w "servidor: %{http_code}\n" "$URL" | tee -a "$LOG"
 
 step "1. Abrir sitio"
 $AB open "$URL" >>"$LOG" 2>&1
+$AB eval "localStorage.clear(); 'limpio'" >>"$LOG" 2>&1
+$AB open "$URL" >>"$LOG" 2>&1
 $AB wait --load networkidle >>"$LOG" 2>&1
 D=$($AB get count '[role="dialog"]' 2>/dev/null | tr -d '\r')
 echo "dialogs antes de jkl: '$D' (esperado 0)" | tee -a "$LOG"

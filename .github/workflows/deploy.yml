@@ -45,8 +45,21 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment-retry.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
+        uses: actions/deploy-pages@v4
+        # Si otro despliegue está en curso (p. ej. tras re-ejecutar un run),
+        # GitHub responde 400 "due to in progress deployment". No marcamos el
+        # job como fallido todavía: esperamos y reintentamos una vez.
+        continue-on-error: true
+
+      - name: Esperar a que se libere el despliegue anterior
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 90
+
+      - name: Reintentar despliegue
+        id: deployment-retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4

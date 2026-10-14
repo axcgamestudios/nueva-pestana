@@ -103,6 +103,8 @@ async function ghRequest<T>(
       ...(init.body ? { "Content-Type": "application/json" } : {}),
     },
     body: init.body ? JSON.stringify(init.body) : undefined,
+    // Evita cuelgues infinitos: si GitHub no responde, error visible a los 30 s
+    signal: AbortSignal.timeout(30_000),
   });
   const data: unknown = await res.json().catch(() => null);
   if (!res.ok) {
@@ -116,6 +118,85 @@ async function ghRequest<T>(
 interface GhContent {
   sha: string;
   content?: string;
+}
+
+interface GhRef {
+  object?: { sha?: string };
+}
+
+interface GhCommitInfo {
+  tree?: { sha?: string };
+}
+
+interface GhBlob {
+  sha: string;
+}
+
+interface TreeEntry {
+  path: string;
+  mode: "100644";
+  type: "blob";
+  sha: string | null;
+}
+
+/** Sube el contenido (base64) como blob y devuelve su SHA. */
+async function createBlob(token: string, b64: string): Promise<string> {
+  const blob = await ghRequest<GhBlob>(`/repos/${REPO}/git/blobs`, token, {
+    method: "POST",
+    body: { content: b64, encoding: "base64" },
+  });
+  return blob.sha;
+}
+
+/**
+ * Crea UN solo commit con todos los ficheros indicados y lo empuja a main.
+ *
+ * Se usa la Git Data API (blobs → árbol → commit → ref) en lugar de la API
+ * de Contents por fichero: así cada publicación genera un único commit y
+ * un único despliegue de Pages, evitando la carrera "due to in progress
+ * deployment" que ocurría al empujar dos commits seguidos (portada y luego
+ * catálogo) y disparar dos workflows casi a la vez.
+ *
+ * Las entradas con sha: null borran el fichero del árbol (para eliminar
+ * portadas al quitar un juego).
+ */
+async function commitFiles(
+  token: string,
+  message: string,
+  entries: TreeEntry[]
+): Promise<void> {
+  const headRef = await ghRequest<GhRef>(`/repos/${REPO}/git/ref/heads/main`, token);
+  const headSha = headRef.object?.sha;
+  if (!headSha) throw new Error("No se pudo leer el HEAD del repositorio.");
+  const headCommit = await ghRequest<GhCommitInfo>(
+    `/repos/${REPO}/git/commits/${headSha}`,
+    token
+  );
+  const baseTree = headCommit.tree?.sha;
+  const tree = await ghRequest<{ sha: string }>(`/repos/${REPO}/git/trees`, token, {
+    method: "POST",
+    body: {
+      ...(baseTree ? { base_tree: baseTree } : {}),
+      tree: entries,
+    },
+  });
+  const commit = await ghRequest<{ sha: string }>(
+    `/repos/${REPO}/git/commits`,
+    token,
+    {
+      method: "POST",
+      body: { message, tree: tree.sha, parents: [headSha] },
+    }
+  );
+  await ghRequest(`/repos/${REPO}/git/refs/heads/main`, token, {
+    method: "PATCH",
+    body: { sha: commit.sha },
+  });
+}
+
+/** Ruta real dentro del repo de una portada pública (/games/... → public/games/...). */
+function repoCoverPath(cover: string): string {
+  return `public/${cover.replace(/^\/+/, "")}`;
 }
 
 async function readCatalog(token: string): Promise<{ list: Game[]; sha?: string }> {
@@ -345,24 +426,26 @@ export default function DevPanel() {
       };
 
       try {
-        setBusy("Subiendo portada…");
-        await ghRequest(
-          `/repos/${REPO}/contents/${IMG_DIR}/${id}.jpg`,
-          t,
-          { method: "PUT", body: { message: `panel: portada ${id}`, content: coverB64 } }
-        );
-
-        setBusy("Actualizando catálogo…");
+        setBusy("Publicando juego…");
         const current = await readCatalog(t);
         const next = [...current.list, game];
-        await ghRequest(`/repos/${REPO}/contents/${JSON_PATH}`, t, {
-          method: "PUT",
-          body: {
-            message: `panel: añadir ${game.title}`,
-            content: utf8ToBase64(JSON.stringify(next, null, 2) + "\n"),
-            ...(current.sha ? { sha: current.sha } : {}),
+        const jsonB64 = utf8ToBase64(JSON.stringify(next, null, 2) + "\n");
+
+        // Un único commit atómico: portada + catálogo juntos → un único deploy
+        await commitFiles(t, `panel: añadir ${game.title}`, [
+          {
+            path: `${IMG_DIR}/${id}.jpg`,
+            mode: "100644",
+            type: "blob",
+            sha: await createBlob(t, coverB64),
           },
-        });
+          {
+            path: JSON_PATH,
+            mode: "100644",
+            type: "blob",
+            sha: await createBlob(t, jsonB64),
+          },
+        ]);
 
         setOk(
           "¡Juego publicado! El sitio se reconstruye solo en ~2 minutos. Refresca la página dentro de un rato y aparecerá para todos."
@@ -402,30 +485,37 @@ export default function DevPanel() {
       const t = localStorage.getItem(TOKEN_KEY) ?? "";
       if (!t) return;
       try {
-        setBusy("Quitando del catálogo…");
+        setBusy("Eliminando juego…");
         const current = await readCatalog(t);
         const next = current.list.filter((x) => x.id !== game.id);
-        await ghRequest(`/repos/${REPO}/contents/${JSON_PATH}`, t, {
-          method: "PUT",
-          body: {
-            message: `panel: quitar ${game.title}`,
-            content: utf8ToBase64(JSON.stringify(next, null, 2) + "\n"),
-            ...(current.sha ? { sha: current.sha } : {}),
-          },
-        });
+        const jsonB64 = utf8ToBase64(JSON.stringify(next, null, 2) + "\n");
 
-        setBusy("Borrando portada…");
+        // Un único commit: quita del catálogo Y borra la portada del repo
         try {
-          const img = await ghRequest<GhContent>(
-            `/repos/${REPO}/contents${game.cover}?t=${Date.now()}`,
-            t
-          );
-          await ghRequest(`/repos/${REPO}/contents${game.cover}`, t, {
-            method: "DELETE",
-            body: { message: `panel: borrar portada ${game.id}`, sha: img.sha },
-          });
+          await commitFiles(t, `panel: quitar ${game.title}`, [
+            {
+              path: JSON_PATH,
+              mode: "100644",
+              type: "blob",
+              sha: await createBlob(t, jsonB64),
+            },
+            {
+              path: repoCoverPath(game.cover),
+              mode: "100644",
+              type: "blob",
+              sha: null,
+            },
+          ]);
         } catch {
-          /* la portada ya no existía */
+          // La portada quizá ya no existe en el repo: reintentar solo con el catálogo
+          await commitFiles(t, `panel: quitar ${game.title}`, [
+            {
+              path: JSON_PATH,
+              mode: "100644",
+              type: "blob",
+              sha: await createBlob(t, jsonB64),
+            },
+          ]);
         }
 
         setOk("Juego eliminado del catálogo.");
