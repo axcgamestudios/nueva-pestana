@@ -98,5 +98,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#38bdf8"
+  },
+  {
+    "id": "juego-de-prueba-nandu-5561",
+    "title": "Juego de Prueba Ñandú",
+    "tagline": "Prueba del panel con acentos áéíóú ñ. Será eliminada enseguida.",
+    "description": "Prueba del panel con acentos áéíóú ñ. Será eliminada enseguida.",
+    "longDescription": "Prueba del panel con acentos áéíóú ñ. Será eliminada enseguida. Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/juego-de-prueba-nandu-5561.jpg",
+    "url": "https://example.com/",
+    "categories": [
+      "Acción"
+    ],
+    "tags": [
+      "Acción",
+      "Comunidad"
+    ],
+    "rating": 4.9,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#38bdf8"
   }
 ]
