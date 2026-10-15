@@ -178,5 +178,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#22c55e"
+  },
+  {
+    "id": "fnaf-pizzeria-simulator-z9g9",
+    "title": "FNAF Pizzeria Simulator",
+    "tagline": ".",
+    "description": ".",
+    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/fnaf-pizzeria-simulator-z9g9.jpg",
+    "url": "https://axcgamestudios2.github.io/fnaf/ps/",
+    "categories": [
+      "Supervivencia"
+    ],
+    "tags": [
+      "Supervivencia",
+      "Comunidad"
+    ],
+    "rating": 4.6,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#eab308"
   }
 ]
