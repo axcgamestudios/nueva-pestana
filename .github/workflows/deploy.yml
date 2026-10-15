@@ -17,6 +17,15 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      # actions:write permite borrar artefactos obsoletos de este mismo run:
+      # al re-ejecutar un run fallido, cada intento vuelve a subir un
+      # artefacto "github-pages" y deploy-pages v4 falla con
+      # "Multiple artifacts named github-pages". Se limpian antes de subir.
+      contents: read
+      pages: write
+      id-token: write
+      actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,6 +43,24 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
+      - name: Limpiar artefactos "github-pages" previos de este run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId,
+            });
+            for (const artifact of artifacts.data.artifacts.filter((a) => a.name === 'github-pages')) {
+              core.info(`Eliminando artefacto obsoleto #${artifact.id} (${artifact.created_at})`);
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id,
+              });
+            }
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

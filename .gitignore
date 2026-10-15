@@ -65,3 +65,7 @@ agent-ctx/
 !.env.example
 tool-results/
 # Prefijo interno de la BD textdb (no es secreto, va en el código)
+
+# archivos internos del entorno (no van al repo)
+.db-prefix
+.zscripts/dev.pid
