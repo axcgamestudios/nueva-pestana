@@ -109,6 +109,19 @@ export function getSessionUser(): AxUser | null {
   }
 }
 
+/**
+ * Avisa a la UI (p. ej. al banner de migración) de que el registro en la
+ * nube acaba de cambiar, para que vuelva a comprobarse y no pida migrar
+ * una cuenta que ya está subiéndose / subida.
+ */
+export function announceCloudSync(): void {
+  try {
+    window.dispatchEvent(new Event("axcgames:cloud-sync"));
+  } catch {
+    /* sin window (SSR) */
+  }
+}
+
 export async function registerAccount(
   username: string,
   password: string,
@@ -164,6 +177,9 @@ export async function registerAccount(
         accs[clean].cloudSyncedAt = Date.now();
         saveAccounts(accs);
       }
+      // La cuenta ya está en la nube: ocultar el banner de migración
+      // si llegó a mostrarse mientras la escritura estaba en vuelo.
+      announceCloudSync();
     }
   });
   return { ok: true, user };
@@ -270,5 +286,6 @@ export async function migrateAccountToCloud(
     accounts[clean].cloudSyncedAt = Date.now();
     saveAccounts(accounts);
   }
+  announceCloudSync();
   return { ok: true };
 }

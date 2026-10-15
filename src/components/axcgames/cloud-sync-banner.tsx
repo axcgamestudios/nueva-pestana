@@ -37,6 +37,14 @@ export default function CloudSyncBanner() {
     }
     let alive = true;
     setVisibility("checking");
+    // Cuenta recién creada en esta misma visita: su registro en la nube
+    // está en vuelo — no pedirle migrar (si la escritura fallara, el banner
+    // aparecerá en la próxima carga de página).
+    const isFresh = Date.now() - Date.parse(me.createdAt) < 60_000;
+    if (isFresh) {
+      setVisibility("hidden");
+      return;
+    }
     fetchRegistry(8000).then((reg) => {
       if (!alive) return;
       // Si la nube no responde no molestar: se reintenta en la próxima visita
@@ -61,6 +69,18 @@ export default function CloudSyncBanner() {
       alive = false;
     };
   }, [me?.id]);
+
+  // La cuenta acaba de llegar a la nube (registro o migración completados):
+  // volver a comprobar y ocultar el banner si ya no hace falta.
+  useEffect(() => {
+    const username = me?.username;
+    if (!username) return;
+    const onSync = () => {
+      setVisibility((v) => (v === "needed" ? "hidden" : v));
+    };
+    window.addEventListener("axcgames:cloud-sync", onSync);
+    return () => window.removeEventListener("axcgames:cloud-sync", onSync);
+  }, [me?.username]);
 
   const migrate = useCallback(async () => {
     if (!me || busy) return;
