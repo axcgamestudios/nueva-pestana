@@ -138,5 +138,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#f97316"
+  },
+  {
+    "id": "fnaf-sister-location-suxl",
+    "title": "FNAF Sister Location",
+    "tagline": ".",
+    "description": ".",
+    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/fnaf-sister-location-suxl.jpg",
+    "url": "https://axcgamestudios2.github.io/fnaf/sl/",
+    "categories": [
+      "Supervivencia"
+    ],
+    "tags": [
+      "Supervivencia",
+      "Comunidad"
+    ],
+    "rating": 4.6,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#22c55e"
   }
 ]
