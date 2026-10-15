@@ -17,7 +17,10 @@ import NotificationWatcher from "@/components/axcgames/notification-watcher";
 import ChatApp from "@/components/axcgames/chat/chat-app";
 import CallLayer from "@/components/axcgames/chat/call-overlay";
 import DevPanel from "@/components/axcgames/dev-panel";
+import CloudSyncBanner from "@/components/axcgames/cloud-sync-banner";
 import { useToast } from "@/hooks/use-toast";
+import { pushCloudStats } from "@/lib/cloud-db";
+import { readOwn } from "@/lib/playtime";
 
 const FAV_KEY = "axcgames:favorites";
 const RECENT_KEY = "axcgames:recent";
@@ -57,6 +60,22 @@ export default function Home() {
   useEffect(() => {
     if (me) connect();
   }, [me, connect]);
+
+  // Sincronización con la nube: subir datos de juego al entrar y al salir
+  // (pagehide + keepalive para que no se pierda la última partida)
+  useEffect(() => {
+    if (!me) return;
+    void pushCloudStats(me.id, readOwn(me.id), { force: true }).catch(() => {
+      /* sin nube: se reintenta al jugar */
+    });
+    const onHide = () => {
+      void pushCloudStats(me.id, readOwn(me.id), { force: true, keepalive: true }).catch(() => {
+        /* última oportunidad */
+      });
+    };
+    window.addEventListener("pagehide", onHide);
+    return () => window.removeEventListener("pagehide", onHide);
+  }, [me?.id]);
 
   // Tras login/registro desde la vista auth: si intentaba jugar a algo, abrirlo;
   // si no, ir al chat (definido tras handleOpenGame, ver más abajo)
@@ -209,6 +228,9 @@ export default function Home() {
 
       {/* Notificaciones del chat activas en TODAS las vistas (home, juego, chat) */}
       <NotificationWatcher />
+
+      {/* Aviso para migrar la cuenta al nuevo sistema compartido */}
+      <CloudSyncBanner />
 
       <Header
         query={query}

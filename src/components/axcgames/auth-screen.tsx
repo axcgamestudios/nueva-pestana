@@ -71,6 +71,9 @@ export default function AuthScreen() {
                   ? "Bienvenido de nuevo. Entra para chatear y jugar."
                   : "Crea tu cuenta gratis. Sin email, sin complicaciones."}
             </p>
+            <p className="mt-2 text-[11px] font-semibold uppercase tracking-widest text-emerald-400/70">
+              ✓ Nuevo: cuentas compartidas entre dispositivos
+            </p>
           </div>
 
           {/* Tabs */}
@@ -185,8 +188,8 @@ export default function AuthScreen() {
             </button>
 
             <p className="text-center text-xs leading-relaxed text-white/40">
-              Necesitas una cuenta para jugar y chatear. Solo usuario y contraseña,
-              sin email; tus amigos te encontrarán por tu nombre de usuario.
+              Solo usuario y contraseña, sin email. Tu cuenta se guarda en la nube:
+              entra desde cualquier dispositivo y tus amigos te encontrarán por tu usuario.
             </p>
           </form>
         </div>

@@ -21,6 +21,7 @@
  */
 
 import { asset } from "@/lib/paths";
+import { pushCloudStats } from "./cloud-db";
 
 /* ------------------------------------------------------------------ */
 /* Tipos                                                               */
@@ -248,6 +249,8 @@ function pruneDays(days: Record<string, PlaytimeDayMap>): Record<string, Playtim
 /**
  * Suma `seconds` al día de hoy (y al juego indicado) del usuario.
  * Se llama cada pocos segundos mientras la vista de juego está abierta.
+ * Además, con moderación (máx. 1 cada 5 min), sube los datos a la nube
+ * para que el panel de administración los vea siempre.
  */
 export function recordPlaytime(userId: string, gameId: string, seconds: number): void {
   if (!userId || !Number.isFinite(seconds) || seconds <= 0) return;
@@ -260,6 +263,10 @@ export function recordPlaytime(userId: string, gameId: string, seconds: number):
   data.updatedAt = Date.now();
   writeJSON(ownKey(userId), data);
   emitChange();
+  // Sincronización con la nube (fire-and-forget con throttle interno)
+  void pushCloudStats(userId, data).catch(() => {
+    /* sin nube: se reintenta en la próxima llamada */
+  });
 }
 
 /** Segundos jugados en un día concreto. */
@@ -290,9 +297,8 @@ export function lastDaysSeconds(data: PlaytimeData, n: number): number {
   return total;
 }
 
-/** Resumen compacto listo para compartir por P2P. */
-export function buildStatsPayload(userId: string): PlaytimeStats {
-  const data = readOwn(userId);
+/** Resumen compacto a partir de datos ya leídos (reutilizable para la nube). */
+export function statsFromData(data: PlaytimeData): PlaytimeStats {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - (SHARE_DAYS - 1));
   const cutoffKey = todayKey(cutoff);
@@ -311,6 +317,11 @@ export function buildStatsPayload(userId: string): PlaytimeStats {
   }
   for (const [gameId, sec] of Object.entries(g)) g[gameId] = Math.round(sec);
   return { d, g, t: Math.round(total), up: Date.now() };
+}
+
+/** Resumen compacto listo para compartir por P2P. */
+export function buildStatsPayload(userId: string): PlaytimeStats {
+  return statsFromData(readOwn(userId));
 }
 
 /* ------------------------------------------------------------------ */

@@ -33,196 +33,37 @@ import {
   X,
 } from "lucide-react";
 import { useAxStore, type AxUser } from "@/lib/store";
-import { loadAccounts } from "@/lib/accounts";
 import { games as builtinGames, type Game } from "@/lib/games";
 import { fetchCommunityGames } from "@/lib/community-games";
 import {
   activeBonusMonth,
-  buildStatsPayload,
-  daysBetween,
   daysInMonth,
   enforcementActive,
   formatDuration,
   formatMinutes,
   getCachedConfig,
-  getPeerStats,
   loadPlaytimeConfig,
   monthKey,
-  monthOfDateKey,
-  readOwn,
   setCachedConfig,
   subscribePlaytime,
   suggestMonthlyLimitMin,
   todayKey,
   type PlaytimeConfig,
-  type PlaytimeStats,
   type PlaytimeUserConfig,
 } from "@/lib/playtime";
+import {
+  buildRows,
+  sourceLabel,
+  type StatRow,
+} from "@/lib/panel-rows";
+import {
+  fetchCloudSnapshot,
+  getCachedSnapshot,
+  type CloudSnapshot,
+} from "@/lib/cloud-db";
 import { PT_JSON_PATH, TOKEN_KEY, commitFiles, createBlob, utf8ToBase64 } from "./dev-panel";
 
 type Mode = "stats" | "limits";
-
-/* ------------------------------------------------------------------ */
-/* Filas de estadísticas                                               */
-/* ------------------------------------------------------------------ */
-
-interface StatRow {
-  userId: string;
-  username: string;
-  displayName: string;
-  avatarColor: string;
-  isMe: boolean;
-  online: boolean;
-  lastSeen: number | null;
-  stats: PlaytimeStats;
-  todaySec: number;
-  weekSec: number;
-  monthSec: number;
-  avgDailySec: number;
-  totalSec: number;
-  /** De dónde conocemos a este jugador. */
-  source: "local" | "p2p" | "config";
-}
-
-/** Etiqueta corta del origen de cada fila (para la UI). */
-function sourceLabel(source: StatRow["source"], isMe: boolean): string {
-  if (isMe) return "sesión actual";
-  if (source === "local") return "cuenta en este navegador";
-  if (source === "p2p") return "visto en la red P2P";
-  return "solo en la configuración";
-}
-
-const EMPTY_STATS: PlaytimeStats = { d: {}, g: {}, t: 0, up: 0 };
-
-function summarize(
-  ident: { id: string; username: string; displayName: string; avatarColor: string },
-  stats: PlaytimeStats,
-  isMe: boolean,
-  online: boolean,
-  lastSeen: number | null,
-  config: PlaytimeConfig,
-  source: StatRow["source"]
-): StatRow {
-  const today = todayKey();
-  const month = monthKey();
-  const from = config.observationStart > today ? today : config.observationStart;
-  const observedDays = Math.max(1, Math.min(30, daysBetween(from, today) + 1));
-  const weekAgo = new Date();
-  weekAgo.setDate(weekAgo.getDate() - 6);
-  const weekStart = todayKey(weekAgo);
-
-  let monthSec = 0;
-  let fromSec = 0;
-  let weekSec = 0;
-  for (const [day, sec] of Object.entries(stats.d)) {
-    if (monthOfDateKey(day) === month) monthSec += sec;
-    if (day >= from && day <= today) fromSec += sec;
-    if (day >= weekStart && day <= today) weekSec += sec;
-  }
-  return {
-    userId: ident.id,
-    username: ident.username,
-    displayName: ident.displayName || ident.username,
-    avatarColor: ident.avatarColor || "#f59e0b",
-    isMe,
-    online,
-    lastSeen,
-    stats,
-    todaySec: stats.d[today] ?? 0,
-    weekSec,
-    monthSec,
-    avgDailySec: fromSec / observedDays,
-    totalSec: stats.t,
-    source,
-  };
-}
-
-function buildRows(me: AxUser | null, onlineIds: Set<string>, config: PlaytimeConfig): StatRow[] {
-  const rows: StatRow[] = [];
-  const seen = new Set<string>();
-
-  // 1) TODAS las cuentas creadas en este navegador (con o sin sesión
-  // iniciada). Sus datos de juego viven en este mismo localStorage
-  // (`axcgames:playtime:<userId>`), así que se leen directamente aunque
-  // no estén conectadas ahora mismo.
-  for (const account of Object.values(loadAccounts())) {
-    const u = account?.user;
-    if (!u?.id || seen.has(u.id)) continue;
-    seen.add(u.id);
-    const own = readOwn(u.id);
-    const lastSeen = own.updatedAt || Date.parse(u.createdAt) || null;
-    rows.push(
-      summarize(
-        u,
-        buildStatsPayload(u.id),
-        me?.id === u.id,
-        onlineIds.has(u.id),
-        lastSeen,
-        config,
-        "local"
-      )
-    );
-  }
-
-  // Red de seguridad: la sesión actual siempre presente (ya está entre las
-  // cuentas locales, pero por si faltara de forma anómala).
-  if (me && !seen.has(me.id)) {
-    seen.add(me.id);
-    rows.push(
-      summarize(me, buildStatsPayload(me.id), true, true, Date.now(), config, "local")
-    );
-  }
-
-  // 2) Jugadores de OTROS navegadores/dispositivos conocidos por la red
-  // P2P (aparecen en cuanto coinciden conectados contigo alguna vez).
-  for (const p of getPeerStats()) {
-    if (seen.has(p.userId)) continue;
-    seen.add(p.userId);
-    rows.push(
-      summarize(
-        {
-          id: p.userId,
-          username: p.username,
-          displayName: p.displayName,
-          avatarColor: p.avatarColor,
-        },
-        p.stats,
-        false,
-        onlineIds.has(p.userId),
-        p.seenAt,
-        config,
-        "p2p"
-      )
-    );
-  }
-
-  // 3) Usuarios que solo existen en la configuración de límites (nunca
-  // vistos todavía): se listan con ceros para poder gestionarlos también.
-  for (const [userId, uc] of Object.entries(config.users)) {
-    if (seen.has(userId)) continue;
-    const username = uc.username ?? userId;
-    rows.push(
-      summarize(
-        { id: userId, username, displayName: username, avatarColor: "#f59e0b" },
-        EMPTY_STATS,
-        false,
-        false,
-        null,
-        config,
-        "config"
-      )
-    );
-  }
-
-  rows.sort(
-    (a, b) =>
-      Number(b.online) - Number(a.online) ||
-      Number(b.isMe) - Number(a.isMe) ||
-      b.monthSec - a.monthSec ||
-      a.username.localeCompare(b.username)
-  );
-  return rows;
-}
 
 /* ------------------------------------------------------------------ */
 /* Utilidades de presentación                                          */
@@ -341,6 +182,24 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
   // Configuración local (para fechas de fase en la pestaña de estadísticas)
   const config = useMemo(() => getCachedConfig(), [tick]);
 
+  // Instantánea de la nube: TODAS las cuentas registradas + sus datos de
+  // juego. Se muestra la caché al instante y se refresca cada 60 s.
+  const [cloud, setCloud] = useState<CloudSnapshot | null>(() => getCachedSnapshot());
+  useEffect(() => {
+    let alive = true;
+    const load = () => {
+      void fetchCloudSnapshot().then((snap) => {
+        if (alive && snap) setCloud(snap);
+      });
+    };
+    load();
+    const timer = setInterval(load, 60_000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, []);
+
   // Nombres de juego (catálogo completo) para el desglose por juego
   const [titles, setTitles] = useState<Record<string, string>>({});
   useEffect(() => {
@@ -357,8 +216,8 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
   }, []);
 
   const rows = useMemo(
-    () => buildRows(me, onlineIds, config),
-    [me, onlineIds, config]
+    () => buildRows(me, onlineIds, config, cloud),
+    [me, onlineIds, config, cloud]
   );
 
   /* ------------------------- Pestaña ESTADÍSTICAS ------------------------ */
@@ -533,10 +392,9 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
             <Users className="mx-auto h-8 w-8 text-white/30" />
             <p className="mt-3 text-sm font-bold text-white/70">Todavía no hay jugadores conocidos</p>
             <p className="mx-auto mt-2 max-w-sm text-xs leading-relaxed text-white/40">
-              Aparecen aquí todas las cuentas creadas en este navegador, los jugadores de otros
-              dispositivos que hayas visto conectados alguna vez (red P2P) y los usuarios guardados
-              en la configuración. Si una cuenta se creó en otro navegador, aparecerá en cuanto
-              esa persona entre mientras tú tengas el sitio abierto.
+              En cuanto alguien cree su cuenta (ahora compartida en la nube) aparecerá aquí
+              automáticamente, aunque nunca coincidan conectados contigo. También se listan las
+              cuentas creadas en este navegador.
             </p>
           </div>
         ) : (
@@ -627,11 +485,10 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
 
         <p className="flex items-start gap-2 text-xs leading-relaxed text-white/30">
           <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          El tiempo se cuenta solo con la vista de juego abierta y la pestaña visible. Se listan todas
-          las cuentas de este navegador (datos completos, leídos directamente), los jugadores de
-          otros dispositivos vistos conectados alguna vez (red P2P cifrada) y los usuarios de la
-          configuración. Un jugador de otro navegador aparece aquí la primera vez que coincida
-          conectado contigo.
+          El tiempo se cuenta solo con la vista de juego abierta y la pestaña visible. Las cuentas
+          están registradas en una base de datos compartida en la nube, de modo que cada jugador
+          aparece siempre (los datos se suben cada ~5 min mientras juega y al cerrar la pestaña);
+          se listan además las cuentas de este navegador y las vistas por la red P2P.
         </p>
       </div>
     );
@@ -748,9 +605,8 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
               <Users className="mx-auto h-8 w-8 text-white/30" />
               <p className="mt-3 text-sm font-bold text-white/70">Todavía no hay jugadores</p>
               <p className="mx-auto mt-2 max-w-sm text-xs leading-relaxed text-white/40">
-                Aquí aparecen todas las cuentas creadas en este navegador, los jugadores de otros
-                dispositivos vistos conectados alguna vez y los usuarios guardados en la
-                configuración. Crea una cuenta o espera a que alguien se conecte para gestionar su límite.
+                En cuanto alguien cree su cuenta (ahora compartida en la nube) aparecerá aquí para
+                configurar su límite. También se listan las cuentas de este navegador.
               </p>
             </div>
           ) : (

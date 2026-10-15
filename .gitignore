@@ -64,3 +64,4 @@ agent-ctx/
 # plantilla de variables de entorno (copiar a .env)
 !.env.example
 tool-results/
+# Prefijo interno de la BD textdb (no es secreto, va en el código)
