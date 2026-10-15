@@ -14,9 +14,11 @@ import type { AxUser } from "./store";
 import {
   fetchCloudStats,
   fetchRegistry,
+  getCachedRegistry,
   pushCloudStats,
   registerCloudAccount,
   type CloudAccount,
+  type CloudRegistry,
 } from "./cloud-db";
 import { readOwn } from "./playtime";
 
@@ -288,4 +290,33 @@ export async function migrateAccountToCloud(
   }
   announceCloudSync();
   return { ok: true };
+}
+
+/**
+ * ¿Puede este usuario jugar? Solo si su cuenta está registrada en la
+ * base de datos compartida (obligatorio para que su tiempo de juego
+ * quede registrado para el panel de administración).
+ *
+ * - Consulta la caché del registro (instantáneo) y luego la nube.
+ * - Si la nube no responde, deja jugar solo a cuentas que ya se
+ *   migraron antes desde este navegador (cloudSyncedAt).
+ */
+export async function isAccountCloudReady(username: string): Promise<boolean> {
+  const clean = username.trim().toLowerCase();
+  if (!clean) return false;
+  const cached = getCachedRegistry();
+  if (cached?.users[clean]) return true;
+  let remote: CloudRegistry | null = null;
+  try {
+    remote = await fetchRegistry(6000);
+  } catch {
+    remote = null;
+  }
+  if (remote) return Boolean(remote.users[clean]);
+  // Nube inalcanzable: confiar en la última sincronización local
+  try {
+    return Boolean(loadAccounts()[clean]?.cloudSyncedAt);
+  } catch {
+    return false;
+  }
 }

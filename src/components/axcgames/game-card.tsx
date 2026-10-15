@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Heart, Play, Star, Users } from "lucide-react";
 import type { Game } from "@/lib/games";
 import { asset } from "@/lib/paths";
@@ -23,15 +23,27 @@ export default function GameCard({
   index = 0,
   priority = false,
 }: Props) {
+  // Tilt 3D suave que sigue el cursor
+  const mx = useMotionValue(0.5);
+  const my = useMotionValue(0.5);
+  const rotateX = useSpring(useTransform(my, [0, 1], [6, -6]), {
+    stiffness: 260,
+    damping: 22,
+  });
+  const rotateY = useSpring(useTransform(mx, [0, 1], [-6, 6]), {
+    stiffness: 260,
+    damping: 22,
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: Math.min(index, 5) * 0.06 }}
-      whileHover={{ y: -6 }}
-      className="group"
+      className="group min-w-0"
+      style={{ perspective: 900 }}
     >
-      <div
+      <motion.div
         role="button"
         tabIndex={0}
         aria-label={`Jugar ${game.title}`}
@@ -42,7 +54,21 @@ export default function GameCard({
             onPlay(game);
           }
         }}
-        style={{ ["--accent" as string]: game.accent }}
+        onMouseMove={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          mx.set((e.clientX - r.left) / r.width);
+          my.set((e.clientY - r.top) / r.height);
+        }}
+        onMouseLeave={() => {
+          mx.set(0.5);
+          my.set(0.5);
+        }}
+        style={{
+          ["--accent" as string]: game.accent,
+          rotateX,
+          rotateY,
+          transformStyle: "preserve-3d",
+        }}
         className="relative block w-full cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 text-left outline-none transition-[border-color,box-shadow] duration-300 hover:border-white/25 hover:shadow-2xl hover:shadow-black focus-visible:ring-2 focus-visible:ring-amber-400/70"
       >
         <div className="relative aspect-[16/10] w-full">
@@ -52,7 +78,7 @@ export default function GameCard({
             fill
             priority={priority}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-[1.06]"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
           />
           {/* legibility gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/25 to-black/10" />
@@ -62,20 +88,20 @@ export default function GameCard({
             aria-hidden
             className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
             style={{
-              boxShadow: `inset 0 0 0 1.5px ${game.accent}80, inset 0 -60px 60px -30px ${game.accent}33`,
+              boxShadow: `inset 0 0 0 1.5px ${game.accent}99, inset 0 -70px 70px -30px ${game.accent}40`,
             }}
           />
 
           {/* category badge */}
           <span
-            className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-black shadow-lg"
+            className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-black shadow-lg transition-transform duration-300 group-hover:scale-105"
             style={{ backgroundColor: game.accent }}
           >
             {game.categories[0]}
           </span>
 
           {/* favorite button */}
-          <button
+          <motion.button
             type="button"
             aria-label={
               isFavorite
@@ -86,19 +112,24 @@ export default function GameCard({
               e.stopPropagation();
               onToggleFavorite(game.id);
             }}
-            className="absolute right-3 top-3 rounded-full bg-black/55 p-2 text-white/80 backdrop-blur transition hover:scale-110 hover:bg-black/75 hover:text-amber-400 active:scale-90"
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.85 }}
+            className="absolute right-3 top-3 rounded-full bg-black/55 p-2 text-white/80 backdrop-blur transition hover:bg-black/75 hover:text-amber-400"
           >
             <Heart
               className="h-4 w-4"
               fill={isFavorite ? "#fbbf24" : "none"}
               color={isFavorite ? "#fbbf24" : "currentColor"}
             />
-          </button>
+          </motion.button>
 
           {/* play overlay */}
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-            <span className="flex h-14 w-14 scale-75 items-center justify-center rounded-full bg-white text-black shadow-2xl transition-transform duration-300 group-hover:scale-100">
-              <Play className="h-6 w-6 translate-x-0.5" fill="currentColor" />
+            <span
+              className="flex h-16 w-16 scale-75 items-center justify-center rounded-full bg-white text-black shadow-2xl transition-transform duration-300 ease-out group-hover:scale-100"
+              style={{ boxShadow: "0 0 42px 8px rgba(255,255,255,0.28)" }}
+            >
+              <Play className="h-7 w-7 translate-x-0.5" fill="currentColor" />
             </span>
           </div>
 
@@ -119,7 +150,7 @@ export default function GameCard({
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }

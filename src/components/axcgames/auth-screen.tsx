@@ -93,14 +93,19 @@ export default function AuthScreen() {
                   setMode(id);
                   setError(null);
                 }}
-                className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
-                  mode === id
-                    ? "bg-amber-400 text-black shadow-lg shadow-amber-400/20"
-                    : "text-white/60 hover:bg-white/5 hover:text-white"
+                className={`relative flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                  mode === id ? "text-black" : "text-white/60 hover:bg-white/5 hover:text-white"
                 }`}
               >
-                <Icon className="h-4 w-4" />
-                {label}
+                {mode === id && (
+                  <motion.span
+                    layoutId="auth-tab-pill"
+                    transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                    className="absolute inset-0 rounded-xl bg-amber-400 shadow-lg shadow-amber-400/25"
+                  />
+                )}
+                <Icon className="relative h-4 w-4" />
+                <span className="relative">{label}</span>
               </button>
             ))}
           </div>
@@ -174,10 +179,12 @@ export default function AuthScreen() {
               </motion.p>
             )}
 
-            <button
+            <motion.button
               type="submit"
               disabled={loading || !username.trim() || !password}
-              className="axc-shine relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-amber-400 px-6 py-3.5 font-display text-sm font-bold tracking-widest text-black shadow-xl shadow-amber-400/25 transition hover:bg-amber-300 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              whileHover={{ scale: loading ? 1 : 1.02 }}
+              whileTap={{ scale: loading ? 1 : 0.97 }}
+              className="axc-shine axc-glow relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-amber-400 px-6 py-3.5 font-display text-sm font-bold tracking-widest text-black disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -185,7 +192,7 @@ export default function AuthScreen() {
                 <>{mode === "login" ? <LogIn className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}</>
               )}
               {mode === "login" ? "ENTRAR" : "CREAR CUENTA"}
-            </button>
+            </motion.button>
 
             <p className="text-center text-xs leading-relaxed text-white/40">
               Solo usuario y contraseña, sin email. Tu cuenta se guarda en la nube:

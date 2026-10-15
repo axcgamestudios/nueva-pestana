@@ -3,7 +3,9 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Campo de partículas conectadas (canvas) — patrón animado premium.
+ * Campo estelar premium (canvas):
+ * - Partículas doradas/blancas con titileo (twinkle) y conexiones.
+ * - Estrellas fugaces (meteoros) con estela de degradado.
  * Se pausa cuando la pestaña está oculta y respeta prefers-reduced-motion.
  */
 function Particles() {
@@ -16,12 +18,34 @@ function Particles() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    type P = { x: number; y: number; vx: number; vy: number; r: number; gold: boolean };
+    type P = {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      r: number;
+      gold: boolean;
+      /** fase de titileo */
+      tw: number;
+      twSpeed: number;
+    };
+    type Meteor = {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      len: number;
+      life: number;
+      maxLife: number;
+    };
+
     let parts: P[] = [];
+    let meteors: Meteor[] = [];
     let w = 0;
     let h = 0;
     let raf = 0;
     let running = true;
+    let nextMeteorAt = 0;
 
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
@@ -31,24 +55,47 @@ function Particles() {
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = Math.min(85, Math.max(28, Math.floor((w * h) / 26000)));
+      const count = Math.min(95, Math.max(30, Math.floor((w * h) / 24000)));
       parts = Array.from({ length: count }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
         vx: (Math.random() - 0.5) * 0.22,
         vy: (Math.random() - 0.5) * 0.22,
-        r: Math.random() * 1.5 + 0.5,
+        r: Math.random() * 1.6 + 0.5,
         gold: Math.random() < 0.55,
+        tw: Math.random() * Math.PI * 2,
+        twSpeed: 0.008 + Math.random() * 0.02,
       }));
     };
 
-    const step = () => {
+    const spawnMeteor = (t: number) => {
+      // Diagonal descendente desde la zona superior
+      const fromTop = Math.random() < 0.75;
+      const speed = 7 + Math.random() * 5;
+      const angle = (Math.PI / 180) * (18 + Math.random() * 16);
+      meteors.push({
+        x: fromTop ? Math.random() * w * 0.8 : -40,
+        y: fromTop ? -20 : Math.random() * h * 0.35,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        len: 110 + Math.random() * 140,
+        life: 0,
+        maxLife: 55 + Math.random() * 30,
+      });
+      // Próxima estrella fugaz en 3–9 s
+      nextMeteorAt = t + 3000 + Math.random() * 6000;
+    };
+
+    const step = (t: number) => {
       if (!running) return;
       ctx.clearRect(0, 0, w, h);
+
+      if (t >= nextMeteorAt) spawnMeteor(t);
 
       for (const p of parts) {
         p.x += p.vx;
         p.y += p.vy;
+        p.tw += p.twSpeed;
         if (p.x < -24) p.x = w + 24;
         if (p.x > w + 24) p.x = -24;
         if (p.y < -24) p.y = h + 24;
@@ -75,12 +122,41 @@ function Particles() {
         }
       }
 
+      // Estrellas con titileo (más brillo en el pico del ciclo)
       for (const p of parts) {
+        const twinkle = 0.55 + 0.45 * Math.sin(p.tw);
         ctx.fillStyle = p.gold
-          ? "rgba(251, 191, 36, 0.5)"
-          : "rgba(255, 255, 255, 0.32)";
+          ? `rgba(251, 191, 36, ${0.5 * twinkle + 0.15})`
+          : `rgba(255, 255, 255, ${0.34 * twinkle + 0.1})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Estrellas fugaces: estela con degradado + núcleo brillante
+      meteors = meteors.filter((m) => m.life < m.maxLife);
+      for (const m of meteors) {
+        m.life += 1;
+        m.x += m.vx;
+        m.y += m.vy;
+        const fade = Math.sin((m.life / m.maxLife) * Math.PI); // entra y sale suave
+        const tailX = m.x - (m.vx / Math.hypot(m.vx, m.vy)) * m.len;
+        const tailY = m.y - (m.vy / Math.hypot(m.vx, m.vy)) * m.len;
+        const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
+        grad.addColorStop(0, `rgba(255, 236, 170, ${0.8 * fade})`);
+        grad.addColorStop(0.35, `rgba(251, 191, 36, ${0.35 * fade})`);
+        grad.addColorStop(1, "rgba(251, 191, 36, 0)");
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(m.x, m.y);
+        ctx.lineTo(tailX, tailY);
+        ctx.stroke();
+        // Núcleo
+        ctx.fillStyle = `rgba(255, 246, 205, ${0.9 * fade})`;
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, 1.6, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -110,17 +186,18 @@ function Particles() {
     };
   }, []);
 
-  return <canvas ref={ref} className="absolute inset-0 h-full w-full opacity-60" />;
+  return <canvas ref={ref} className="absolute inset-0 h-full w-full opacity-70" />;
 }
 
 /**
- * Fondo animado premium: partículas + aurora + grid + ruido + viñeta.
- * Solo transform/opacity/canvas para rendimiento. Respeta prefers-reduced-motion.
+ * Fondo animado premium: campo estelar con fugaces + auroras + rayo de luz
+ * + grid + ruido + viñeta. Solo transform/opacity/canvas para rendimiento.
+ * Respeta prefers-reduced-motion.
  */
 export default function AnimatedBg({ dim = false }: { dim?: boolean }) {
   return (
     <div aria-hidden className="fixed inset-0 -z-10 overflow-hidden bg-[#050505]">
-      {/* Partículas conectadas */}
+      {/* Campo estelar con estrellas fugaces */}
       <Particles />
 
       {/* Blobs de aurora */}
@@ -128,21 +205,31 @@ export default function AnimatedBg({ dim = false }: { dim?: boolean }) {
         className="axc-aurora axc-aurora-a absolute -top-[20%] left-[-10%] h-[55vmax] w-[55vmax] rounded-full opacity-70 blur-[110px]"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(251,191,36,0.16), rgba(251,146,60,0.05) 45%, transparent 70%)",
+            "radial-gradient(circle at center, rgba(251,191,36,0.18), rgba(251,146,60,0.06) 45%, transparent 70%)",
         }}
       />
       <div
         className="axc-aurora axc-aurora-b absolute top-[30%] right-[-15%] h-[50vmax] w-[50vmax] rounded-full opacity-60 blur-[120px]"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(239,68,68,0.10), rgba(190,24,93,0.05) 45%, transparent 70%)",
+            "radial-gradient(circle at center, rgba(239,68,68,0.12), rgba(190,24,93,0.06) 45%, transparent 70%)",
         }}
       />
       <div
         className="axc-aurora axc-aurora-c absolute bottom-[-25%] left-[20%] h-[45vmax] w-[45vmax] rounded-full opacity-60 blur-[130px]"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(52,211,153,0.08), rgba(45,212,191,0.04) 45%, transparent 70%)",
+            "radial-gradient(circle at center, rgba(52,211,153,0.09), rgba(45,212,191,0.05) 45%, transparent 70%)",
+        }}
+      />
+
+      {/* Rayo de luz que barre la pantalla */}
+      <div
+        className="axc-beam absolute -top-[20%] left-0 h-[140%] w-[24vw]"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent, rgba(251,191,36,0.05) 45%, rgba(255,235,180,0.09) 50%, rgba(251,191,36,0.05) 55%, transparent)",
+          filter: "blur(6px)",
         }}
       />
 

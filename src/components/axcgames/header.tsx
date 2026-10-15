@@ -103,13 +103,15 @@ export default function Header({
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#050505]/85 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
         {/* Logo */}
-        <button
+        <motion.button
           type="button"
           onClick={onGoHome}
           aria-label="Ir al inicio de axcgames"
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
           className="group flex shrink-0 items-center gap-2.5"
         >
-          <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-amber-400/30 shadow-lg shadow-amber-500/20 transition-transform group-hover:scale-105">
+          <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-amber-400/30 shadow-lg shadow-amber-500/20 transition-shadow duration-300 group-hover:shadow-amber-400/50">
             <Image
               src={asset("/logo-emblem.png")}
               alt="Logotipo de AXC GAMES"
@@ -121,9 +123,9 @@ export default function Header({
           </span>
           <span className="font-display text-lg font-extrabold tracking-wider">
             <span className="text-white">AXC</span>
-            <span className="text-amber-400">GAMES</span>
+            <span className="text-amber-400 transition-colors group-hover:text-amber-300">GAMES</span>
           </span>
-        </button>
+        </motion.button>
 
         {/* Buscador escritorio */}
         <div className={`mx-2 hidden min-w-0 flex-1 md:block md:mx-6 ${inChat ? "opacity-40 pointer-events-none" : ""}`}>
@@ -135,7 +137,7 @@ export default function Header({
           <button
             type="button"
             onClick={onGoHome}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition hover:bg-white/5 ${
+            className={`axc-navlink rounded-full px-4 py-2 text-sm font-medium transition hover:bg-white/5 ${
               view === "home" ? "text-white" : "text-white/70 hover:text-white"
             }`}
           >
@@ -144,7 +146,9 @@ export default function Header({
           <button
             type="button"
             onClick={() => onNavigate("favoritos")}
-            className="flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/5 hover:text-white"
+            className={`axc-navlink flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition hover:bg-white/5 ${
+              view === "home" ? "text-white/70 hover:text-white" : "text-white/70"
+            }`}
           >
             <Heart className="h-4 w-4" />
             Favoritos
@@ -300,7 +304,7 @@ export default function Header({
               e.preventDefault();
               openAuth();
             }}
-            className="flex items-center gap-1.5 rounded-full bg-amber-400 px-4 py-2 text-sm font-bold text-black shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 active:scale-95"
+            className="axc-shine relative flex items-center gap-1.5 overflow-hidden rounded-full bg-amber-400 px-4 py-2 text-sm font-bold text-black shadow-lg shadow-amber-400/25 transition hover:bg-amber-300 hover:shadow-amber-400/50 active:scale-95"
           >
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Entrar</span>

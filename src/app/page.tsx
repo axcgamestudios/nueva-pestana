@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Gamepad2, SearchX, ShieldCheck, Trophy, Zap } from "lucide-react";
 import { allCategories, featuredGame, games, type Game } from "@/lib/games";
@@ -18,8 +18,10 @@ import ChatApp from "@/components/axcgames/chat/chat-app";
 import CallLayer from "@/components/axcgames/chat/call-overlay";
 import DevPanel from "@/components/axcgames/dev-panel";
 import CloudSyncBanner from "@/components/axcgames/cloud-sync-banner";
+import MigrationGate from "@/components/axcgames/migration-gate";
 import { useToast } from "@/hooks/use-toast";
 import { pushCloudStats } from "@/lib/cloud-db";
+import { isAccountCloudReady } from "@/lib/accounts";
 import { readOwn } from "@/lib/playtime";
 
 const FAV_KEY = "axcgames:favorites";
@@ -135,15 +137,8 @@ export default function Home() {
     [toast, allGames]
   );
 
-  const handleOpenGame = useCallback(
+  const openGameNow = useCallback(
     (game: Game) => {
-      // Cuenta obligatoria: sin sesión se pide entrar/registrarse y se
-      // recuerda el juego para abrirlo justo después del login
-      if (!useAxStore.getState().me) {
-        useAxStore.setState({ activeGame: game });
-        useAxStore.getState().openAuth();
-        return;
-      }
       openGame(game);
       setRecent((prev) => {
         const next = [game.id, ...prev.filter((r) => r !== game.id)].slice(0, 4);
@@ -158,13 +153,42 @@ export default function Home() {
     [openGame]
   );
 
+  // Puerta de cuenta actualizada: no se juega sin estar registrado en la
+  // nube (el tiempo de juego debe quedar registrado para el admin).
+  const [gateGame, setGateGame] = useState<Game | null>(null);
+  const gateChecking = useRef(false);
+
+  const handleOpenGame = useCallback(
+    (game: Game) => {
+      // Cuenta obligatoria: sin sesión se pide entrar/registrarse y se
+      // recuerda el juego para abrirlo justo después del login
+      const meNow = useAxStore.getState().me;
+      if (!meNow) {
+        useAxStore.setState({ activeGame: game });
+        useAxStore.getState().openAuth();
+        return;
+      }
+      if (gateChecking.current) return;
+      gateChecking.current = true;
+      void isAccountCloudReady(meNow.username)
+        .then((ready) => {
+          if (ready) openGameNow(game);
+          else setGateGame(game);
+        })
+        .catch(() => openGameNow(game))
+        .finally(() => {
+          gateChecking.current = false;
+        });
+    },
+    [openGameNow]
+  );
+
   // Tras login/registro desde la vista auth: si intentaba jugar a algo,
   // abrirlo justo después; si no, ir al chat
   useEffect(() => {
     if (me && view === "auth") {
       const pending = useAxStore.getState().activeGame;
       if (pending) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- transición única tras login (mismo patrón que la hidratación de preferencias)
         handleOpenGame(pending);
       } else {
         openChat();
@@ -231,6 +255,16 @@ export default function Home() {
 
       {/* Aviso para migrar la cuenta al nuevo sistema compartido */}
       <CloudSyncBanner />
+
+      {/* Puerta: obliga a actualizar la cuenta antes de jugar */}
+      <MigrationGate
+        game={gateGame}
+        onClose={() => setGateGame(null)}
+        onMigrated={(g) => {
+          setGateGame(null);
+          openGameNow(g);
+        }}
+      />
 
       <Header
         query={query}
@@ -305,12 +339,17 @@ export default function Home() {
                 {FEATURE_STRIP.map(({ icon: Icon, title, sub }) => (
                   <motion.div
                     key={title}
-                    whileHover={{ y: -3 }}
-                    className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-sm transition-colors hover:border-white/20 hover:bg-white/[0.06]"
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                    className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-sm transition-colors hover:border-amber-400/30 hover:bg-white/[0.06] hover:shadow-lg hover:shadow-amber-400/10"
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-amber-400">
+                    <motion.span
+                      whileHover={{ rotate: -8, scale: 1.12 }}
+                      transition={{ type: "spring", stiffness: 320, damping: 14 }}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-amber-400 shadow-inner shadow-amber-400/10 transition-colors group-hover:bg-amber-400/20"
+                    >
                       <Icon className="h-5 w-5" />
-                    </span>
+                    </motion.span>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold text-white">{title}</p>
                       <p className="truncate text-xs text-white/45">{sub}</p>
@@ -326,7 +365,14 @@ export default function Home() {
                 aria-labelledby="recent-heading"
                 className="mx-auto w-full max-w-7xl px-4 pt-10 sm:px-6 lg:px-8"
               >
-                <h2 id="recent-heading" className="font-display text-lg font-bold tracking-wide">
+                <h2
+                  id="recent-heading"
+                  className="flex items-center gap-3 font-display text-lg font-bold tracking-wide"
+                >
+                  <span
+                    aria-hidden
+                    className="h-5 w-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 shadow-md shadow-amber-400/40"
+                  />
                   CONTINÚA JUGANDO
                 </h2>
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -351,7 +397,14 @@ export default function Home() {
                 aria-labelledby="favorites-heading"
                 className="mx-auto w-full max-w-7xl scroll-mt-24 px-4 pt-10 sm:px-6 lg:px-8"
               >
-                <h2 id="favorites-heading" className="font-display text-lg font-bold tracking-wide">
+                <h2
+                  id="favorites-heading"
+                  className="flex items-center gap-3 font-display text-lg font-bold tracking-wide"
+                >
+                  <span
+                    aria-hidden
+                    className="h-5 w-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 shadow-md shadow-amber-400/40"
+                  />
                   TUS FAVORITOS
                 </h2>
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -377,7 +430,14 @@ export default function Home() {
             >
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <h2 id="games-heading" className="font-display text-xl font-bold tracking-wide sm:text-2xl">
+                  <h2
+                    id="games-heading"
+                    className="flex items-center gap-3 font-display text-xl font-bold tracking-wide sm:text-2xl"
+                  >
+                    <span
+                      aria-hidden
+                      className="h-6 w-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 shadow-md shadow-amber-400/40"
+                    />
                     TODOS LOS JUEGOS
                   </h2>
                   <p className="mt-1 text-sm text-white/45">
@@ -400,19 +460,28 @@ export default function Home() {
               {/* Categorías */}
               <div className="mt-5 flex flex-wrap gap-2" role="group" aria-label="Filtrar por categoría">
                 {allCategories.map((cat) => (
-                  <button
+                  <motion.button
                     key={cat}
                     type="button"
+                    layout
                     onClick={() => setCategory(cat)}
                     aria-pressed={category === cat}
-                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                    whileTap={{ scale: 0.94 }}
+                    className={`relative rounded-full border px-4 py-2 text-sm font-semibold ${
                       category === cat
-                        ? "border-amber-400 bg-amber-400 text-black shadow-lg shadow-amber-400/25"
+                        ? "border-transparent text-black"
                         : "border-white/10 bg-white/5 text-white/65 hover:border-white/25 hover:text-white"
                     }`}
                   >
-                    {cat}
-                  </button>
+                    {category === cat && (
+                      <motion.span
+                        layoutId="cat-pill"
+                        transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                        className="absolute inset-0 rounded-full bg-amber-400 shadow-lg shadow-amber-400/30"
+                      />
+                    )}
+                    <span className="relative">{cat}</span>
+                  </motion.button>
                 ))}
               </div>
 

@@ -122,6 +122,153 @@
   }
 }
 
+/* ===== axcgames premium UI v2 ===== */
+
+/* Glow pulsante para botones primarios */
+@keyframes axc-glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 18px 2px rgba(251, 191, 36, 0.3),
+      0 10px 32px -8px rgba(251, 191, 36, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 34px 8px rgba(251, 191, 36, 0.55),
+      0 12px 40px -8px rgba(251, 191, 36, 0.6);
+  }
+}
+.axc-glow {
+  animation: axc-glow-pulse 2.8s ease-in-out infinite;
+}
+
+/* Texto dorado con brillo que viaja */
+@keyframes axc-text-shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+.axc-text-shimmer {
+  background: linear-gradient(
+    110deg,
+    #fff 30%,
+    #fde68a 42%,
+    #fbbf24 50%,
+    #fde68a 58%,
+    #fff 70%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: axc-text-shimmer 5.5s linear infinite;
+}
+
+/* Rayo de luz que barre la pantalla de fondo */
+@keyframes axc-beam-sweep {
+  0% {
+    transform: translateX(-35vw) rotate(16deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.5;
+  }
+  45% {
+    transform: translateX(130vw) rotate(16deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(130vw) rotate(16deg);
+    opacity: 0;
+  }
+}
+.axc-beam {
+  animation: axc-beam-sweep 16s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Rotación lenta (bordes cónicos decorativos) */
+@keyframes axc-spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.axc-spin-slow {
+  animation: axc-spin-slow 16s linear infinite;
+  will-change: transform;
+}
+
+/* Flotación suave */
+@keyframes axc-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+.axc-float {
+  animation: axc-float 5s ease-in-out infinite;
+}
+
+/* Subrayado animado para enlaces de navegación */
+.axc-navlink {
+  position: relative;
+}
+.axc-navlink::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  right: 50%;
+  bottom: 5px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+  transition:
+    left 0.28s ease,
+    right 0.28s ease;
+}
+.axc-navlink:hover::after {
+  left: 22%;
+  right: 22%;
+}
+
+/* Bordes con degradado giratorio (marco premium) */
+.axc-frame {
+  position: relative;
+}
+.axc-frame::before {
+  content: "";
+  position: absolute;
+  inset: -60%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(251, 191, 36, 0.45) 38deg,
+    transparent 80deg,
+    transparent 170deg,
+    rgba(251, 191, 36, 0.28) 215deg,
+    transparent 260deg
+  );
+  animation: axc-spin-slow 16s linear infinite;
+  pointer-events: none;
+}
+
+/* Escala con brillo al hacer hover en tarjetas premium */
+.axc-card-lift {
+  transition:
+    transform 0.35s cubic-bezier(0.21, 1.02, 0.73, 1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+.axc-card-lift:hover {
+  transform: translateY(-8px);
+}
+
 /* ===== axcgames premium dark ===== */
 ::selection {
   background: rgba(251, 191, 36, 0.35);
@@ -389,7 +536,21 @@ html {
   .axc-shine::after,
   .axc-badge-pop,
   .axc-msg-in,
-  .axc-marquee {
+  .axc-marquee,
+  .axc-glow,
+  .axc-text-shimmer,
+  .axc-beam,
+  .axc-spin-slow,
+  .axc-float,
+  .axc-frame::before,
+  .axc-card-lift {
     animation: none !important;
+    transition: none !important;
+  }
+  .axc-text-shimmer {
+    background: none;
+    color: #fff;
+    -webkit-background-clip: initial;
+    background-clip: initial;
   }
 }

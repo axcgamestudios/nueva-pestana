@@ -29,9 +29,24 @@ export default function Hero({
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl shadow-black"
+        className="relative rounded-3xl p-[1.5px]"
       >
-        <div className="relative h-[500px] w-full sm:h-[440px] lg:h-[520px]">
+        {/* Borde dorado giratorio (se asoma por el padding de 1.5px) */}
+        <div
+          aria-hidden
+          className="axc-spin-slow absolute inset-[-150%]"
+          style={{
+            background:
+              "conic-gradient(from 0deg, transparent 0deg, rgba(251,191,36,0.0) 40deg, rgba(251,191,36,0.65) 60deg, rgba(253,230,138,0.9) 70deg, rgba(251,191,36,0.65) 80deg, transparent 100deg, transparent 180deg, rgba(251,191,36,0.35) 220deg, transparent 250deg)",
+          }}
+        />
+        {/* Base tenue del borde (siempre visible) */}
+        <div
+          aria-hidden
+          className="absolute inset-0 rounded-3xl border border-white/10"
+        />
+
+        <div className="relative h-[500px] w-full overflow-hidden rounded-[calc(1.5rem-1.5px)] bg-[#050505] shadow-2xl shadow-black">
           <Image
             src={asset(game.cover)}
             alt={`Portada de ${game.title}`}
@@ -49,7 +64,7 @@ export default function Hero({
             aria-hidden
             className="pointer-events-none absolute right-[2%] top-1/2 hidden w-[300px] -translate-y-1/2 select-none md:block xl:w-[380px]"
           >
-            <div className="axc-pulse opacity-80 mix-blend-screen">
+            <div className="axc-float opacity-80 mix-blend-screen">
               <Image
                 src={asset("/logo-full.png")}
                 alt=""
@@ -65,17 +80,21 @@ export default function Hero({
           <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10 lg:p-14">
             <div className="max-w-2xl">
               <div className="mb-4 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-black shadow-lg shadow-amber-400/25">
+                <motion.span
+                  animate={{ scale: [1, 1.04, 1] }}
+                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-amber-400 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-black shadow-lg shadow-amber-400/40"
+                >
                   <Flame className="h-3.5 w-3.5" fill="currentColor" />
                   Destacado
-                </span>
+                </motion.span>
                 <span className="rounded-full border border-white/20 bg-black/40 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white/80 backdrop-blur">
                   {game.categories.join(" · ")}
                 </span>
               </div>
 
-              <h1 className="font-display text-4xl font-black leading-[1.05] tracking-wide text-white sm:text-5xl lg:text-6xl">
-                {game.title.toUpperCase()}
+              <h1 className="font-display text-4xl font-black leading-[1.05] tracking-wide sm:text-5xl lg:text-6xl">
+                <span className="axc-text-shimmer">{game.title.toUpperCase()}</span>
               </h1>
               <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/75 sm:text-base">
                 {game.description}
@@ -97,38 +116,51 @@ export default function Hero({
               </div>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
-                <button
+                <motion.button
                   type="button"
                   onClick={() => onPlay(game)}
-                  className="axc-shine relative inline-flex items-center gap-2.5 overflow-hidden rounded-full bg-amber-400 px-7 py-3.5 font-display text-sm font-bold tracking-widest text-black shadow-xl shadow-amber-400/30 transition hover:bg-amber-300 hover:shadow-amber-400/50 active:scale-95"
+                  whileHover={{ scale: 1.04, y: -2 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="axc-shine axc-glow relative inline-flex items-center gap-2.5 overflow-hidden rounded-full bg-amber-400 px-7 py-3.5 font-display text-sm font-bold tracking-widest text-black"
                 >
                   <Play className="h-4 w-4" fill="currentColor" />
                   JUGAR AHORA
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   type="button"
                   onClick={onExplore}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white/85 backdrop-blur transition hover:border-white/35 hover:bg-white/10 active:scale-95"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white/85 backdrop-blur transition hover:border-white/35 hover:bg-white/10"
                 >
                   Explorar juegos
-                  <ChevronDown className="h-4 w-4" />
-                </button>
-                <button
+                  <motion.span
+                    animate={{ y: [0, 4, 0] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </motion.span>
+                </motion.button>
+                <motion.button
                   type="button"
                   onClick={() => onToggleFavorite(game.id)}
+                  whileHover={{ scale: 1.12 }}
+                  whileTap={{ scale: 0.88 }}
                   aria-label={
                     isFavorite
                       ? `Quitar ${game.title} de favoritos`
                       : `Añadir ${game.title} a favoritos`
                   }
-                  className="rounded-full border border-white/15 bg-white/5 p-3.5 text-white/80 backdrop-blur transition hover:border-amber-400/50 hover:text-amber-400 active:scale-95"
+                  className="rounded-full border border-white/15 bg-white/5 p-3.5 text-white/80 backdrop-blur transition hover:border-amber-400/60 hover:text-amber-400 hover:shadow-lg hover:shadow-amber-400/20"
                 >
                   <Heart
                     className="h-5 w-5"
                     fill={isFavorite ? "#fbbf24" : "none"}
                     color={isFavorite ? "#fbbf24" : "currentColor"}
                   />
-                </button>
+                </motion.button>
               </div>
             </div>
           </div>

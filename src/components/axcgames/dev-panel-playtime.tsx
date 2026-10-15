@@ -9,10 +9,10 @@
  * lo comparte por la red P2P (acción "pstat"); aquí se muestran los conocidos.
  *
  * LÍMITES: cada usuario tiene un tope mensual de minutos desde
- * `enforcementStart`. Aquí se editan (sugeridos a partir de la media diaria
- * observada), se conceden horas extra (+1 h, +2 h…) para el mes y se guarda
- * todo en el repositorio (public/data/playtime-config.json) con un commit
- * atómico, igual que el gestor de juegos.
+ * `enforcementStart`. Aquí se editan manualmente y se conceden horas
+ * extra (+1 h, +2 h…) para el mes; todo se guarda en el repositorio
+ * (public/data/playtime-config.json) con un commit atómico, igual que
+ * el gestor de juegos.
  */
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
@@ -28,7 +28,6 @@ import {
   Save,
   ShieldAlert,
   ShieldCheck,
-  Sparkles,
   Users,
   X,
 } from "lucide-react";
@@ -37,7 +36,6 @@ import { games as builtinGames, type Game } from "@/lib/games";
 import { fetchCommunityGames } from "@/lib/community-games";
 import {
   activeBonusMonth,
-  daysInMonth,
   enforcementActive,
   formatDuration,
   formatMinutes,
@@ -46,7 +44,6 @@ import {
   monthKey,
   setCachedConfig,
   subscribePlaytime,
-  suggestMonthlyLimitMin,
   todayKey,
   type PlaytimeConfig,
   type PlaytimeUserConfig,
@@ -313,23 +310,6 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
     []
   );
 
-  const suggestAll = useCallback(() => {
-    setDraft((d) => {
-      if (!d) return d;
-      const month = activeBonusMonth(d);
-      const users = { ...d.users };
-      for (const r of rows) {
-        users[r.userId] = {
-          ...users[r.userId],
-          username: r.username,
-          monthlyLimitMinutes: suggestMonthlyLimitMin(r.stats.d, d, month),
-        };
-      }
-      return { ...d, users };
-    });
-    setDirty(true);
-  }, [rows]);
-
   const save = useCallback(async () => {
     const t = localStorage.getItem(TOKEN_KEY) ?? "";
     if (!t) {
@@ -571,16 +551,6 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={suggestAll}
-                disabled={rows.length === 0}
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold text-white/75 transition hover:border-amber-400/50 hover:text-white active:scale-95 disabled:opacity-40"
-                title={`Rellena cada límite con la media diaria proyectada a ${monthName(targetMonth)} (${daysInMonth(targetMonth)} días)`}
-              >
-                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                Sugerir por estadísticas
-              </button>
-              <button
-                type="button"
                 onClick={() => setReloadCfg((n) => n + 1)}
                 className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/55 transition hover:border-white/25 hover:text-white active:scale-95"
               >
@@ -613,7 +583,6 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
             <ul className="space-y-2.5">
               {listed.map(({ id, row, uc, username }) => {
                 const bonus = uc.bonusMinutes?.[targetMonth] ?? 0;
-                const suggested = row ? suggestMonthlyLimitMin(row.stats.d, draft, targetMonth) : null;
                 return (
                   <li key={id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -654,30 +623,18 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                         <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-white/45">
                           Límite de {monthName(targetMonth)} (min)
                         </label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min={0}
-                            max={43200}
-                            value={uc.monthlyLimitMinutes ?? ""}
-                            placeholder="usa el general"
-                            onChange={(e) => {
-                              const v = e.target.value.trim();
-                              updateUser(id, { monthlyLimitMinutes: v === "" ? null : Number(v) }, username);
-                            }}
-                            className="w-32 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
-                          />
-                          {suggested !== null && (
-                            <button
-                              type="button"
-                              onClick={() => updateUser(id, { monthlyLimitMinutes: suggested }, username)}
-                              title={`Media diaria proyectada al mes (${formatMinutes(suggested)})`}
-                              className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1.5 text-[11px] font-bold text-amber-300 transition hover:bg-amber-400/20 active:scale-95"
-                            >
-                              usar {formatMinutes(suggested)}
-                            </button>
-                          )}
-                        </div>
+                        <input
+                          type="number"
+                          min={0}
+                          max={43200}
+                          value={uc.monthlyLimitMinutes ?? ""}
+                          placeholder="usa el general"
+                          onChange={(e) => {
+                            const v = e.target.value.trim();
+                            updateUser(id, { monthlyLimitMinutes: v === "" ? null : Number(v) }, username);
+                          }}
+                          className="w-32 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
+                        />
                       </div>
 
                       {/* Exento */}
