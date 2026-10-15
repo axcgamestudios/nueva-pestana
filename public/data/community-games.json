@@ -158,5 +158,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#22c55e"
+  },
+  {
+    "id": "fnaf-custom-night-xyfq",
+    "title": "FNAF Custom Night",
+    "tagline": ".",
+    "description": ".",
+    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/fnaf-custom-night-xyfq.jpg",
+    "url": "https://axcgamestudios2.github.io/fnaf/ucn/",
+    "categories": [
+      "Supervivencia"
+    ],
+    "tags": [
+      "Supervivencia",
+      "Comunidad"
+    ],
+    "rating": 4.7,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#22c55e"
   }
 ]
