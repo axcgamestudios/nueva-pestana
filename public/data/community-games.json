@@ -98,5 +98,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#ec4899"
+  },
+  {
+    "id": "fnaf-3-htfy",
+    "title": "FNAF: 3",
+    "tagline": ".",
+    "description": ".",
+    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/fnaf-3-htfy.jpg",
+    "url": "https://axcgamestudios2.github.io/fnaf/3/",
+    "categories": [
+      "Supervivencia"
+    ],
+    "tags": [
+      "Supervivencia",
+      "Comunidad"
+    ],
+    "rating": 4.7,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#38bdf8"
   }
 ]
