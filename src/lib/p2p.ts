@@ -17,7 +17,7 @@
 
 import type { Room } from "trystero/nostr";
 import type { AxConversation, AxMessage, AxUser } from "./store";
-import { buildStatsPayload, ingestPeerStats, type PlaytimeStats } from "./playtime";
+import { buildStatsPayload, ingestPeerIdentity, ingestPeerStats, type PlaytimeStats } from "./playtime";
 
 const APP_ID = "axcgames-nueva-pestana-v1";
 export const LOBBY_ROOM = "lobby";
@@ -463,6 +463,12 @@ function registerIdentity(user: AxUser, peerId: string, roomId: string): void {
   const wasEmpty = set.size === 0;
   if (!set.has(peerId)) set.add(peerId);
   onlineUsers.set(user.id, user);
+  // Persistir la identidad en la caché del panel de administración: así un
+  // usuario avistado en el lobby (aunque se le pierda el mensaje "pstat")
+  // queda registrado como jugador conocido en este navegador.
+  if (roomId === LOBBY_ROOM) {
+    ingestPeerIdentity(user);
+  }
   if (roomId === LOBBY_ROOM && wasEmpty) {
     emit({ type: "peer-online", user });
   }

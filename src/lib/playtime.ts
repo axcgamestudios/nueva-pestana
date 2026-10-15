@@ -355,6 +355,59 @@ export function ingestPeerStats(
   return true;
 }
 
+/**
+ * Registra la identidad de un par visto en la red (acción "id") aunque su
+ * mensaje de estadísticas ("pstat") se haya perdido: crea la entrada con
+ * stats vacíos si no existía y NUNCA sobrescribe stats ya conocidos
+ * (solo refresca identidad y momento del último avistamiento).
+ */
+export function ingestPeerIdentity(
+  user: { id: string; username: string; displayName: string; avatarColor?: string }
+): boolean {
+  if (!user?.id || !user?.username) return false;
+  const raw = readJSON<Record<string, PeerStatsEntry>>(PEERS_KEY, {});
+  const prev = raw[user.id];
+  const displayName = user.displayName || user.username;
+  const now = Date.now();
+
+  // Ya registrado con las mismas señas y visto hace menos de 1 min: no
+  // reescribir (evita escrituras/re-renders con cada heartbeat de 20 s).
+  if (
+    prev &&
+    prev.username === user.username &&
+    prev.displayName === displayName &&
+    prev.avatarColor === (user.avatarColor || prev.avatarColor) &&
+    now - prev.seenAt < 60_000
+  ) {
+    return false;
+  }
+
+  if (prev?.stats?.up) {
+    // ya conocemos sus estadísticas: mantenerlas, refrescar identidad/visto.
+    // (sin este paso, un peer visto solo por "id" desaparecería del panel)
+    raw[user.id] = {
+      userId: user.id,
+      username: user.username,
+      displayName,
+      avatarColor: user.avatarColor || prev.avatarColor || "#f59e0b",
+      stats: prev.stats,
+      seenAt: now,
+    };
+  } else {
+    raw[user.id] = {
+      userId: user.id,
+      username: user.username,
+      displayName,
+      avatarColor: user.avatarColor || "#f59e0b",
+      stats: { d: {}, g: {}, t: 0, up: 0 },
+      seenAt: now,
+    };
+  }
+  writeJSON(PEERS_KEY, raw);
+  emitChange();
+  return true;
+}
+
 /* ------------------------------------------------------------------ */
 /* Configuración de límites (repositorio)                              */
 /* ------------------------------------------------------------------ */

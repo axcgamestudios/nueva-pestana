@@ -33,6 +33,7 @@ import {
   X,
 } from "lucide-react";
 import { useAxStore, type AxUser } from "@/lib/store";
+import { loadAccounts } from "@/lib/accounts";
 import { games as builtinGames, type Game } from "@/lib/games";
 import { fetchCommunityGames } from "@/lib/community-games";
 import {
@@ -48,6 +49,7 @@ import {
   loadPlaytimeConfig,
   monthKey,
   monthOfDateKey,
+  readOwn,
   setCachedConfig,
   subscribePlaytime,
   suggestMonthlyLimitMin,
@@ -78,7 +80,19 @@ interface StatRow {
   monthSec: number;
   avgDailySec: number;
   totalSec: number;
+  /** De dónde conocemos a este jugador. */
+  source: "local" | "p2p" | "config";
 }
+
+/** Etiqueta corta del origen de cada fila (para la UI). */
+function sourceLabel(source: StatRow["source"], isMe: boolean): string {
+  if (isMe) return "sesión actual";
+  if (source === "local") return "cuenta en este navegador";
+  if (source === "p2p") return "visto en la red P2P";
+  return "solo en la configuración";
+}
+
+const EMPTY_STATS: PlaytimeStats = { d: {}, g: {}, t: 0, up: 0 };
 
 function summarize(
   ident: { id: string; username: string; displayName: string; avatarColor: string },
@@ -86,7 +100,8 @@ function summarize(
   isMe: boolean,
   online: boolean,
   lastSeen: number | null,
-  config: PlaytimeConfig
+  config: PlaytimeConfig,
+  source: StatRow["source"]
 ): StatRow {
   const today = todayKey();
   const month = monthKey();
@@ -118,18 +133,51 @@ function summarize(
     monthSec,
     avgDailySec: fromSec / observedDays,
     totalSec: stats.t,
+    source,
   };
 }
 
 function buildRows(me: AxUser | null, onlineIds: Set<string>, config: PlaytimeConfig): StatRow[] {
   const rows: StatRow[] = [];
-  if (me) {
+  const seen = new Set<string>();
+
+  // 1) TODAS las cuentas creadas en este navegador (con o sin sesión
+  // iniciada). Sus datos de juego viven en este mismo localStorage
+  // (`axcgames:playtime:<userId>`), así que se leen directamente aunque
+  // no estén conectadas ahora mismo.
+  for (const account of Object.values(loadAccounts())) {
+    const u = account?.user;
+    if (!u?.id || seen.has(u.id)) continue;
+    seen.add(u.id);
+    const own = readOwn(u.id);
+    const lastSeen = own.updatedAt || Date.parse(u.createdAt) || null;
     rows.push(
-      summarize(me, buildStatsPayload(me.id), true, true, Date.now(), config)
+      summarize(
+        u,
+        buildStatsPayload(u.id),
+        me?.id === u.id,
+        onlineIds.has(u.id),
+        lastSeen,
+        config,
+        "local"
+      )
     );
   }
+
+  // Red de seguridad: la sesión actual siempre presente (ya está entre las
+  // cuentas locales, pero por si faltara de forma anómala).
+  if (me && !seen.has(me.id)) {
+    seen.add(me.id);
+    rows.push(
+      summarize(me, buildStatsPayload(me.id), true, true, Date.now(), config, "local")
+    );
+  }
+
+  // 2) Jugadores de OTROS navegadores/dispositivos conocidos por la red
+  // P2P (aparecen en cuanto coinciden conectados contigo alguna vez).
   for (const p of getPeerStats()) {
-    if (me && p.userId === me.id) continue;
+    if (seen.has(p.userId)) continue;
+    seen.add(p.userId);
     rows.push(
       summarize(
         {
@@ -142,12 +190,36 @@ function buildRows(me: AxUser | null, onlineIds: Set<string>, config: PlaytimeCo
         false,
         onlineIds.has(p.userId),
         p.seenAt,
-        config
+        config,
+        "p2p"
       )
     );
   }
+
+  // 3) Usuarios que solo existen en la configuración de límites (nunca
+  // vistos todavía): se listan con ceros para poder gestionarlos también.
+  for (const [userId, uc] of Object.entries(config.users)) {
+    if (seen.has(userId)) continue;
+    const username = uc.username ?? userId;
+    rows.push(
+      summarize(
+        { id: userId, username, displayName: username, avatarColor: "#f59e0b" },
+        EMPTY_STATS,
+        false,
+        false,
+        null,
+        config,
+        "config"
+      )
+    );
+  }
+
   rows.sort(
-    (a, b) => Number(b.online) - Number(a.online) || b.monthSec - a.monthSec
+    (a, b) =>
+      Number(b.online) - Number(a.online) ||
+      Number(b.isMe) - Number(a.isMe) ||
+      b.monthSec - a.monthSec ||
+      a.username.localeCompare(b.username)
   );
   return rows;
 }
@@ -459,11 +531,12 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
         {rows.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-10 text-center">
             <Users className="mx-auto h-8 w-8 text-white/30" />
-            <p className="mt-3 text-sm font-bold text-white/70">Aún no hay jugadores registrados</p>
+            <p className="mt-3 text-sm font-bold text-white/70">Todavía no hay jugadores conocidos</p>
             <p className="mx-auto mt-2 max-w-sm text-xs leading-relaxed text-white/40">
-              Las estadísticas se recogen solas mientras la gente juega (pestaña visible) y se
-              comparten por la red P2P. En cuanto alguien se conecte contigo aparecerá aquí; los
-              datos conocidos se guardan en este navegador.
+              Aparecen aquí todas las cuentas creadas en este navegador, los jugadores de otros
+              dispositivos que hayas visto conectados alguna vez (red P2P) y los usuarios guardados
+              en la configuración. Si una cuenta se creó en otro navegador, aparecerá en cuanto
+              esa persona entre mientras tú tengas el sitio abierto.
             </p>
           </div>
         ) : (
@@ -494,7 +567,10 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                               {r.displayName}
                               {r.isMe && <span className="ml-1.5 text-[10px] font-bold text-amber-400/80">(tú)</span>}
                             </span>
-                            <span className="block truncate text-[11px] text-white/40">@{r.username}</span>
+                            <span className="block truncate text-[11px] text-white/40">
+                              @{r.username}
+                              <span className="text-white/25"> · {sourceLabel(r.source, r.isMe)}</span>
+                            </span>
                           </span>
                         </span>
                       </td>
@@ -526,7 +602,10 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                               </p>
                               <DayBars days={r.stats.d} />
                               <p className="mt-2 text-[11px] text-white/35">
-                                Esta semana: {formatDuration(r.weekSec)} · visto {timeAgo(r.lastSeen)}
+                                Esta semana: {formatDuration(r.weekSec)} ·{" "}
+                                {r.source === "local"
+                                  ? `últ. partida ${timeAgo(r.lastSeen)}`
+                                  : `visto ${timeAgo(r.lastSeen)}`}
                               </p>
                             </div>
                             <div>
@@ -548,9 +627,11 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
 
         <p className="flex items-start gap-2 text-xs leading-relaxed text-white/30">
           <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          El tiempo se cuenta solo con la vista de juego abierta y la pestaña visible. Se comparte
-          cifrado de navegador a navegador (P2P) y se guarda aquí la última estadística conocida de
-          cada persona.
+          El tiempo se cuenta solo con la vista de juego abierta y la pestaña visible. Se listan todas
+          las cuentas de este navegador (datos completos, leídos directamente), los jugadores de
+          otros dispositivos vistos conectados alguna vez (red P2P cifrada) y los usuarios de la
+          configuración. Un jugador de otro navegador aparece aquí la primera vez que coincida
+          conectado contigo.
         </p>
       </div>
     );
@@ -667,7 +748,9 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
               <Users className="mx-auto h-8 w-8 text-white/30" />
               <p className="mt-3 text-sm font-bold text-white/70">Todavía no hay jugadores</p>
               <p className="mx-auto mt-2 max-w-sm text-xs leading-relaxed text-white/40">
-                Cuando alguien juegue y se conecte contigo aparecerá aquí para configurar su límite.
+                Aquí aparecen todas las cuentas creadas en este navegador, los jugadores de otros
+                dispositivos vistos conectados alguna vez y los usuarios guardados en la
+                configuración. Crea una cuenta o espera a que alguien se conecte para gestionar su límite.
               </p>
             </div>
           ) : (
@@ -690,7 +773,14 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                           <p className="text-sm font-bold text-white">{row?.displayName ?? username}</p>
                           <p className="text-[11px] text-white/40">
                             @{username}
-                            {row?.online ? " · en línea" : row ? ` · ${timeAgo(row.lastSeen)}` : " · solo en config"}
+                            {row
+                              ? row.online
+                                ? " · en línea"
+                                : ` · ${timeAgo(row.lastSeen)}`
+                              : " · solo en config"}
+                            {row && !row.isMe && (
+                              <span className="text-white/25"> · {sourceLabel(row.source, false)}</span>
+                            )}
                           </p>
                         </div>
                       </div>
