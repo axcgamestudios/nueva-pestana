@@ -1,7 +1,12 @@
 {
-  "version": 1,
+  "version": 2,
   "observationStart": "2026-10-15",
   "enforcementStart": "2026-11-01",
   "defaultMonthlyLimitMinutes": 600,
-  "users": {}
+  "users": {
+    "67529afe-c539-43f0-8c0a-453f3bb003bf": {
+      "username": "niggaflow_08",
+      "monthlyLimitMinutes": 1
+    }
+  }
 }
