@@ -98,25 +98,5 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#ec4899"
-  },
-  {
-    "id": "gta-vice-city-3nn7",
-    "title": "GTA: Vice City",
-    "tagline": ".",
-    "description": ".",
-    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
-    "cover": "/games/community/gta-vice-city-3nn7.jpg",
-    "url": "https://axcgamestudios.github.io/gvc/",
-    "categories": [
-      "Acción"
-    ],
-    "tags": [
-      "Acción",
-      "Comunidad"
-    ],
-    "rating": 4.6,
-    "players": "Nuevo",
-    "difficulty": "Media",
-    "accent": "#eab308"
   }
 ]
