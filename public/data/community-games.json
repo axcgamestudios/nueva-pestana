@@ -118,25 +118,5 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#38bdf8"
-  },
-  {
-    "id": "fnaf-4-ndug",
-    "title": "FNAF 4",
-    "tagline": ".",
-    "description": ".",
-    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
-    "cover": "/games/community/fnaf-4-ndug.jpg",
-    "url": "https://axcgamestudios.github.io/fnaf/4/",
-    "categories": [
-      "Supervivencia"
-    ],
-    "tags": [
-      "Supervivencia",
-      "Comunidad"
-    ],
-    "rating": 4.7,
-    "players": "Nuevo",
-    "difficulty": "Media",
-    "accent": "#38bdf8"
   }
 ]
