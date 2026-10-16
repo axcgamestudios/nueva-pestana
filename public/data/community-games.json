@@ -218,5 +218,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#eab308"
+  },
+  {
+    "id": "potrero-87ac",
+    "title": "Potrero",
+    "tagline": ".",
+    "description": ".",
+    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/potrero-87ac.jpg",
+    "url": "https://www.potrerofutbol.ar/",
+    "categories": [
+      "Casual"
+    ],
+    "tags": [
+      "Casual",
+      "Comunidad"
+    ],
+    "rating": 4.8,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#22c55e"
   }
 ]
