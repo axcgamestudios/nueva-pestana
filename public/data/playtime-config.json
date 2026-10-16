@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "observationStart": "2026-10-15",
   "enforcementStart": "2026-10-01",
   "defaultMonthlyLimitMinutes": 30,
@@ -35,6 +35,10 @@
       "monthlyLimitMinutes": 60,
       "exempt": true,
       "bonusMinutes": {}
+    },
+    "2b54abb0-b0ff-42cf-845d-26fad5aa8575": {
+      "username": "mbappeesca",
+      "monthlyLimitMinutes": 210
     }
   }
 }
