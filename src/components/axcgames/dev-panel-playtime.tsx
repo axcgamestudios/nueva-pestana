@@ -522,6 +522,25 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                 {prettyDate(draft.enforcementStart)}.
               </span>
             )}
+            <span className="flex-1" />
+            <button
+              type="button"
+              onClick={() => {
+                setDraft({
+                  ...draft,
+                  enforcementStart: enforcing ? "2999-12-31" : todayKey(),
+                });
+                setDirty(true);
+              }}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition active:scale-95 ${
+                enforcing
+                  ? "border border-white/15 bg-white/5 text-white/55 hover:border-red-500/50 hover:text-red-400"
+                  : "bg-amber-400 text-black shadow-lg shadow-amber-400/20 hover:bg-amber-300"
+              }`}
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              {enforcing ? "Desactivar (solo observar)" : "Activar límites AHORA"}
+            </button>
           </div>
 
           {/* Global + acciones */}
