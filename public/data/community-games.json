@@ -198,5 +198,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#eab308"
+  },
+  {
+    "id": "minigames-worx",
+    "title": "minigames",
+    "tagline": "mingames",
+    "description": "mingames",
+    "longDescription": "mingames Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/minigames-worx.jpg",
+    "url": "https://axcgamestudios.github.io/6x-Classroom.github.io/games.html",
+    "categories": [
+      "Casual"
+    ],
+    "tags": [
+      "Casual",
+      "Comunidad"
+    ],
+    "rating": 4.7,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#eab308"
   }
 ]
