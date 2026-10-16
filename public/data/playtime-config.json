@@ -1,8 +1,8 @@
 {
-  "version": 6,
+  "version": 7,
   "observationStart": "2026-10-15",
   "enforcementStart": "2026-10-01",
-  "defaultMonthlyLimitMinutes": 20,
+  "defaultMonthlyLimitMinutes": 30,
   "users": {
     "3cc7c288-d804-4ec4-88ff-33c8f290bc7e": {
       "username": "coste",
