@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "observationStart": "2026-10-15",
   "enforcementStart": "2026-10-01",
   "defaultMonthlyLimitMinutes": 20,
@@ -12,7 +12,7 @@
     },
     "b3999fcc-16b4-463b-a10a-e5aee186c072": {
       "username": "ranamayor67",
-      "monthlyLimitMinutes": 20,
+      "monthlyLimitMinutes": 180,
       "exempt": false,
       "bonusMinutes": {
         "2026-10": 60
