@@ -1,8 +1,8 @@
 {
-  "version": 9,
+  "version": 10,
   "observationStart": "2026-10-15",
   "enforcementStart": "2026-10-01",
-  "defaultWeeklyLimitMinutes": 30,
+  "defaultWeeklyLimitMinutes": 40,
   "users": {
     "3cc7c288-d804-4ec4-88ff-33c8f290bc7e": {
       "username": "coste",
@@ -12,7 +12,7 @@
     },
     "b3999fcc-16b4-463b-a10a-e5aee186c072": {
       "username": "ranamayor67",
-      "weeklyLimitMinutes": 180,
+      "weeklyLimitMinutes": null,
       "exempt": false,
       "bonusMinutes": {
         "2026-10-19": 60
@@ -38,7 +38,9 @@
     },
     "2b54abb0-b0ff-42cf-845d-26fad5aa8575": {
       "username": "mbappeesca",
-      "weeklyLimitMinutes": 210
+      "weeklyLimitMinutes": null,
+      "exempt": false,
+      "bonusMinutes": {}
     }
   }
 }
