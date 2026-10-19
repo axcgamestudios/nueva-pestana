@@ -1,10 +1,12 @@
 #!/bin/bash
-# Test E2E — límites de tiempo con enforcement activo.
+# Test E2E — límites de tiempo SEMANALES con enforcement activo.
 #
 # Parte A (panel): el botón "Activar límites AHORA" / "Desactivar" cambia la
 #   fase del borrador sin guardar nada en el repo.
-# Parte B (bloqueo): un usuario con más minutos jugados este mes que su
-#   límite ve la pantalla "SE ACABÓ TU TIEMPO" y el iframe NO se monta.
+# Parte B (bloqueo): un usuario con más minutos jugados esta semana que su
+#   límite ve la pantalla "SE ACABÓ TU TIEMPO DE ESTA SEMANA" y el iframe
+#   NO se monta; además, lo jugado ANTES del lunes de esta semana no cuenta
+#   (reset semanal).
 #
 # Se ejecuta contra el dev server (puerto 3000, sin basePath):
 #   bash scripts/test-limits-enforcement.sh
@@ -103,12 +105,12 @@ echo "usuario=$USER uid=$TESTID" | tee -a "$LOG"
 [ "$TESTID" != "noid" ] && [ -n "$TESTID" ] || fail "sin userId de sesión"
 TEST_UID="$TESTID"
 
-step "B2. Inyectar 30 min jugados este mes + config con límites activos"
+step "B2. Inyectar 30 min jugados esta semana + config con límites activos"
 INJECT="(function(){
   const uid='$TESTID';
   const today=new Date().toLocaleDateString('sv-SE');
   localStorage.setItem('axcgames:playtime:'+uid, JSON.stringify({days:{[today]:{'apex-kart':1800}}, updatedAt: Date.now()}));
-  localStorage.setItem('axcgames:pt-config', JSON.stringify({config:{version:999, observationStart:'2026-10-15', enforcementStart:'2026-10-01', defaultMonthlyLimitMinutes:20, users:{}}, fetchedAt: Date.now()}));
+  localStorage.setItem('axcgames:pt-config', JSON.stringify({config:{version:999, observationStart:'2026-10-15', enforcementStart:'2026-10-01', defaultWeeklyLimitMinutes:20, users:{}}, fetchedAt: Date.now()}));
   return 'inyectado';
 })()"
 $AB eval "$INJECT" >>"$LOG" 2>&1
@@ -119,13 +121,32 @@ espera_dom "document.body.innerText.includes('TODOS LOS JUEGOS')" 8 || fail "no 
 CLICK="var c=document.querySelector('div[aria-label=\"Jugar Apex Kart\"]');if(c){c.click();'clicked'}else{'nocard'}"
 RES=$($AB eval "$CLICK" 2>/dev/null | tr -d '\r\n"')
 [ "$RES" = "clicked" ] || fail "no se encontró la tarjeta de Apex Kart"
-check "pantalla SE ACABÓ TU TIEMPO" "document.body.innerText.includes('SE ACABÓ TU TIEMPO DE ESTE MES')"
+check "pantalla SE ACABÓ TU TIEMPO DE ESTA SEMANA" "document.body.innerText.includes('SE ACABÓ TU TIEMPO DE ESTA SEMANA')"
 check "iframe del juego NO montado" "!document.querySelector('iframe[title=\"Apex Kart\"]')"
-check "renovación el 1 del próximo mes" "document.body.innerText.includes('se renueva el')"
+check "renovación el próximo lunes" "document.body.innerText.includes('se renueva el') && document.body.innerText.toLowerCase().includes('lunes')"
 $AB screenshot /home/z/my-project/download/limits-bloqueo-excedido.png >/dev/null 2>&1
-echo "bloqueo con límite excedido ✓" | tee -a "$LOG"
+echo "bloqueo con límite semanal excedido ✓" | tee -a "$LOG"
 
-step "B4. Limpieza de la cuenta de prueba en la nube"
+step "B4. Reset semanal: lo jugado antes del lunes NO cuenta"
+# Inyecta 10 h jugadas hace 8 días (semana pasada) y 0 esta semana → NO bloquea.
+INJECTOLD="(function(){
+  const uid='$TESTID';
+  const d=new Date(); d.setDate(d.getDate()-8);
+  const old=d.toLocaleDateString('sv-SE');
+  localStorage.setItem('axcgames:playtime:'+uid, JSON.stringify({days:{[old]:{'apex-kart':36000}}, updatedAt: Date.now()}));
+  return 'inyectado viejo';
+})()"
+$AB eval "$INJECTOLD" >>"$LOG" 2>&1
+$AB eval "Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim().startsWith('Volver'))?.click(); 'ok'" >>"$LOG" 2>&1
+sleep 1
+$AB eval "Array.from(document.querySelectorAll('header button')).find(b=>b.textContent.trim()==='Juegos')?.click(); 'ok'" >>"$LOG" 2>&1
+espera_dom "document.body.innerText.includes('TODOS LOS JUEGOS')" 8 || fail "no llegó a juegos"
+RES=$($AB eval "$CLICK" 2>/dev/null | tr -d '\r\n"')
+[ "$RES" = "clicked" ] || fail "no se encontró la tarjeta de Apex Kart (2)"
+check "NO bloqueado: tiempo de la semana pasada no cuenta" "!!document.querySelector('iframe[title=\"Apex Kart\"]')"
+echo "reset semanal (lunes) ✓" | tee -a "$LOG"
+
+step "B5. Limpieza de la cuenta de prueba en la nube"
 cleanup_cloud
 echo "" | tee -a "$LOG"
 echo "TODAS LAS PRUEBAS PASARON ✓" | tee -a "$LOG"

@@ -8,9 +8,10 @@
  * recogen automáticamente: cada navegador cuenta el tiempo de su usuario y
  * lo comparte por la red P2P (acción "pstat"); aquí se muestran los conocidos.
  *
- * LÍMITES: cada usuario tiene un tope mensual de minutos desde
- * `enforcementStart`. Aquí se editan manualmente y se conceden horas
- * extra (+1 h, +2 h…) para el mes; todo se guarda en el repositorio
+ * LÍMITES: cada usuario tiene un tope de minutos por SEMANA (lunes a
+ * domingo; se reinicia cada lunes) desde `enforcementStart`. Aquí se
+ * editan manualmente y se conceden horas extra (+1 h, +2 h…) para la
+ * semana; todo se guarda en el repositorio
  * (public/data/playtime-config.json) con un commit atómico, igual que
  * el gestor de juegos.
  */
@@ -35,13 +36,12 @@ import { useAxStore, type AxUser } from "@/lib/store";
 import { games as builtinGames, type Game } from "@/lib/games";
 import { fetchCommunityGames } from "@/lib/community-games";
 import {
-  activeBonusMonth,
+  activeBonusPeriod,
   enforcementActive,
   formatDuration,
   formatMinutes,
   getCachedConfig,
   loadPlaytimeConfig,
-  monthKey,
   setCachedConfig,
   subscribePlaytime,
   todayKey,
@@ -83,11 +83,6 @@ function prettyDate(dateKey: string): string {
     day: "numeric",
     month: "short",
   });
-}
-
-function monthName(month: string): string {
-  const [y, m] = month.split("-").map((x) => Number.parseInt(x, 10));
-  return new Date(y, m - 1, 1).toLocaleDateString("es-MX", { month: "long" });
 }
 
 /** Gráfico de barras de los últimos 14 días (CSS puro). */
@@ -251,7 +246,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
     };
   }, [mode, reloadCfg]);
 
-  const targetMonth = draft ? activeBonusMonth(draft) : "";
+  const targetPeriod = draft ? activeBonusPeriod(draft) : "";
   const enforcing = draft ? enforcementActive(draft) : false;
 
   /** Usuarios visibles en la pestaña de límites: con stats o ya en la config. */
@@ -296,10 +291,10 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
     (userId: string, min: number, username?: string) => {
       setDraft((d) => {
         if (!d) return d;
-        const month = activeBonusMonth(d);
+        const week = activeBonusPeriod(d);
         const prev = d.users[userId] ?? { username };
         const bm = { ...(prev.bonusMinutes ?? {}) };
-        bm[month] = (bm[month] ?? 0) + min;
+        bm[week] = (bm[week] ?? 0) + min;
         return {
           ...d,
           users: { ...d.users, [userId]: { ...prev, username: prev.username ?? username, bonusMinutes: bm } },
@@ -385,7 +380,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                   <th className="px-3 py-2.5 font-bold">Jugador</th>
                   <th className="px-2 py-2.5 text-right font-bold">Hoy</th>
                   <th className="px-2 py-2.5 text-right font-bold">Media/día</th>
-                  <th className="px-2 py-2.5 text-right font-bold">Este mes</th>
+                  <th className="px-2 py-2.5 text-right font-bold">Esta semana</th>
                   <th className="px-2 py-2.5 text-right font-bold">Total</th>
                   <th className="w-8" />
                 </tr>
@@ -419,7 +414,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                         {formatDuration(r.avgDailySec)}
                       </td>
                       <td className="px-2 py-2.5 text-right text-white/85">
-                        {formatDuration(r.monthSec)}
+                        {formatDuration(r.weekSec)}
                       </td>
                       <td className="px-2 py-2.5 text-right text-white/50">
                         {formatDuration(r.totalSec)}
@@ -514,7 +509,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
             {enforcing ? (
               <span>
                 <b>Límites activos</b> desde {prettyDate(draft.enforcementStart)} — se bloquea el
-                juego al agotar el tiempo mensual.
+                juego al agotar el tiempo semanal (se renueva cada lunes).
               </span>
             ) : (
               <span>
@@ -550,18 +545,18 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                 htmlFor="pt-default"
                 className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-white/45"
               >
-                Límite general (min/mes, usuarios sin valor propio)
+                Límite general (min/semana, usuarios sin valor propio)
               </label>
               <input
                 id="pt-default"
                 type="number"
                 min={0}
                 max={43200}
-                value={draft.defaultMonthlyLimitMinutes ?? ""}
+                value={draft.defaultWeeklyLimitMinutes ?? ""}
                 placeholder="sin límite"
                 onChange={(e) => {
                   const v = e.target.value.trim();
-                  setDraft({ ...draft, defaultMonthlyLimitMinutes: v === "" ? null : Number(v) });
+                  setDraft({ ...draft, defaultWeeklyLimitMinutes: v === "" ? null : Number(v) });
                   setDirty(true);
                 }}
                 className="w-40 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
@@ -601,7 +596,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
           ) : (
             <ul className="space-y-2.5">
               {listed.map(({ id, row, uc, username }) => {
-                const bonus = uc.bonusMinutes?.[targetMonth] ?? 0;
+                const bonus = uc.bonusMinutes?.[targetPeriod] ?? 0;
                 return (
                   <li key={id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -630,27 +625,27 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                       </div>
                       {row && (
                         <p className="text-[11px] text-white/40">
-                          Media {formatDuration(row.avgDailySec)}/día · este mes{" "}
-                          <b className="text-white/70">{formatDuration(row.monthSec)}</b>
+                          Media {formatDuration(row.avgDailySec)}/día · esta semana{" "}
+                          <b className="text-white/70">{formatDuration(row.weekSec)}</b>
                         </p>
                       )}
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-end gap-x-5 gap-y-3">
-                      {/* Límite mensual */}
+                      {/* Límite semanal */}
                       <div>
                         <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-white/45">
-                          Límite de {monthName(targetMonth)} (min)
+                          Límite semanal (min)
                         </label>
                         <input
                           type="number"
                           min={0}
                           max={43200}
-                          value={uc.monthlyLimitMinutes ?? ""}
+                          value={uc.weeklyLimitMinutes ?? ""}
                           placeholder="usa el general"
                           onChange={(e) => {
                             const v = e.target.value.trim();
-                            updateUser(id, { monthlyLimitMinutes: v === "" ? null : Number(v) }, username);
+                            updateUser(id, { weeklyLimitMinutes: v === "" ? null : Number(v) }, username);
                           }}
                           className="w-32 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
                         />
@@ -674,7 +669,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="flex items-center gap-1.5 text-xs text-white/55">
                           <Gift className="h-3.5 w-3.5 text-amber-400/80" />
-                          Horas extra de {monthName(targetMonth)}
+                          Horas extra de esta semana
                           {enforcing ? "" : " (se aplicarán al activarse los límites)"}:
                           <b className="text-amber-300">+{formatMinutes(bonus)}</b>
                         </p>
@@ -715,9 +710,11 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
 
           <p className="flex items-start gap-2 text-xs leading-relaxed text-white/30">
             <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            El límite de cada jugador es su tope mensual; las horas extra se suman solo al mes
-            indicado. Al guardar, el navegador de cada jugador aplicará el bloqueo cuando agote su
-            tiempo (comprueba los cambios cada ~2 min mientras juega).
+            El límite de cada jugador es su tope semanal (lunes a domingo) y se
+            renueva cada lunes por sí solo; las horas extra se suman solo a la
+            semana en que se conceden. Al guardar, el navegador de cada jugador
+            aplicará el bloqueo cuando agote su tiempo (comprueba los cambios
+            cada ~2 min mientras juega).
           </p>
         </>
       )}

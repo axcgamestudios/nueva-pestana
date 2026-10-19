@@ -107,7 +107,7 @@ sleep 1
 
 # ------------------------------------- 6) Límite agotado → bloqueo
 step "6. Simular límite mensual agotado → pantalla de bloqueo"
-INJECT="var s=JSON.parse(localStorage.getItem('axcg:accounts'))[localStorage.getItem('axcg:session')];var uid=s.user.id;var t=new Date().toLocaleDateString('sv-SE');var m=t.slice(0,7);var d=JSON.parse(localStorage.getItem('axcgames:playtime:'+uid)||'{\"days\":{}}');d.days[t]={'apex-kart':400};d.updatedAt=Date.now();localStorage.setItem('axcgames:playtime:'+uid,JSON.stringify(d));var cfg={config:{version:99,observationStart:'2026-10-15',enforcementStart:t,defaultMonthlyLimitMinutes:5,users:{}},fetchedAt:Date.now()};localStorage.setItem('axcgames:pt-config',JSON.stringify(cfg));'inyectado'"
+INJECT="var s=JSON.parse(localStorage.getItem('axcg:accounts'))[localStorage.getItem('axcg:session')];var uid=s.user.id;var t=new Date().toLocaleDateString('sv-SE');var m=t.slice(0,7);var d=JSON.parse(localStorage.getItem('axcgames:playtime:'+uid)||'{\"days\":{}}');d.days[t]={'apex-kart':400};d.updatedAt=Date.now();localStorage.setItem('axcgames:playtime:'+uid,JSON.stringify(d));var cfg={config:{version:99,observationStart:'2026-10-15',enforcementStart:t,defaultWeeklyLimitMinutes:5,users:{}},fetchedAt:Date.now()};localStorage.setItem('axcgames:pt-config',JSON.stringify(cfg));'inyectado'"
 $AB eval "$INJECT" >>"$LOG" 2>&1
 $AB open "$URL" >>"$LOG" 2>&1
 $AB wait --load networkidle >>"$LOG" 2>&1
@@ -120,7 +120,7 @@ $AB screenshot /home/z/my-project/download/playtime-blocked.png >/dev/null 2>&1
 
 # ------------------------------------- 7) Horas extra del admin → se puede jugar
 step "7. Dar 2 h extra (bonus) → vuelve a poder jugar"
-BONUS="var s=JSON.parse(localStorage.getItem('axcg:accounts'))[localStorage.getItem('axcg:session')];var uid=s.user.id;var t=new Date().toLocaleDateString('sv-SE');var m=t.slice(0,7);var cfg=JSON.parse(localStorage.getItem('axcgames:pt-config'));cfg.config.users={};cfg.config.users[uid]={username:'$USER',monthlyLimitMinutes:5,bonusMinutes:{}};cfg.config.users[uid].bonusMinutes[m]=120;cfg.fetchedAt=Date.now();localStorage.setItem('axcgames:pt-config',JSON.stringify(cfg));'bonus'"
+BONUS="var s=JSON.parse(localStorage.getItem('axcg:accounts'))[localStorage.getItem('axcg:session')];var uid=s.user.id;var t=new Date().toLocaleDateString('sv-SE');var m=t.slice(0,7);var cfg=JSON.parse(localStorage.getItem('axcgames:pt-config'));cfg.config.users={};cfg.config.users[uid]={username:'$USER',weeklyLimitMinutes:5,bonusMinutes:{}};cfg.config.users[uid].bonusMinutes[m]=120;cfg.fetchedAt=Date.now();localStorage.setItem('axcgames:pt-config',JSON.stringify(cfg));'bonus'"
 $AB eval "$BONUS" >>"$LOG" 2>&1
 $AB open "$URL" >>"$LOG" 2>&1
 $AB wait --load networkidle >>"$LOG" 2>&1

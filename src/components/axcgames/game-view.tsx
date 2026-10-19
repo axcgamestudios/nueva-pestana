@@ -28,6 +28,7 @@ import {
   evaluateLimit,
   formatDuration,
   loadPlaytimeConfig,
+  nextMondayDate,
   readOwn,
   recordPlaytime,
   subscribePlaytime,
@@ -182,8 +183,8 @@ export default function GameView({
       warnedRef.current.add(key);
       toast({ description: msg });
     };
-    if (r <= 15 && r > 5) warn("15", "Te quedan menos de 15 minutos de juego este mes ⏳");
-    if (r <= 5 && r > 0) warn("5", "Últimos minutos de juego del mes ⏳");
+    if (r <= 15 && r > 5) warn("15", "Te quedan menos de 15 minutos de juego esta semana ⏳");
+    if (r <= 5 && r > 0) warn("5", "Últimos minutos de la semana ⏳");
   }, [limit, toast]);
 
   const toggleFullscreen = () => {
@@ -202,7 +203,7 @@ export default function GameView({
     if (limit.exempt) return "Sin límite";
     if (!limit.active) return `Hoy: ${formatDuration(todaySec)}`;
     if (limit.remainingMin === null) return `Hoy: ${formatDuration(todaySec)}`;
-    return `Restan ${formatDuration(limit.remainingMin * 60)} este mes`;
+    return `Restan ${formatDuration(limit.remainingMin * 60)} esta semana`;
   }, [limit, todaySec]);
 
   return (
@@ -242,7 +243,7 @@ export default function GameView({
                 )}`}
                 title={
                   limit?.active && limit.limitMin != null
-                    ? `Límite mensual: ${Math.round(limit.limitMin + limit.bonusMin)} min · jugados ${Math.round(limit.usedMin)} min`
+                    ? `Límite semanal: ${Math.round(limit.limitMin + limit.bonusMin)} min · jugados ${Math.round(limit.usedMin)} min`
                     : "Fase de observación: se está midiendo cuánto juegas"
                 }
               >
@@ -301,25 +302,25 @@ export default function GameView({
                   <Hourglass className="h-10 w-10" />
                 </span>
                 <h2 className="font-display text-2xl font-bold tracking-wide text-white">
-                  SE ACABÓ TU TIEMPO DE ESTE MES
+                  SE ACABÓ TU TIEMPO DE ESTA SEMANA
                 </h2>
                 <p className="max-w-md text-sm leading-relaxed text-white/60">
                   Has jugado <b className="text-white">{formatDuration(limit?.usedMin * 60 ?? 0)}</b>{" "}
-                  de tu tope mensual de{" "}
+                  de tu tope semanal de{" "}
                   <b className="text-white">
                     {formatDuration((limit?.limitMin ?? 0) * 60)}
                     {limit?.bonusMin ? ` (+${formatDuration(limit.bonusMin * 60)} extra)` : ""}
                   </b>
-                  . Vuelve el próximo mes para seguir jugando.
+                  . Vuelve el lunes para seguir jugando.
                 </p>
                 <p className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/50">
                   <CalendarClock className="h-3.5 w-3.5 text-amber-400/80" />
                   Tu tiempo se renueva el{" "}
-                  {new Date(
-                    Number(new Date().getFullYear()),
-                    new Date().getMonth() + 1,
-                    1
-                  ).toLocaleDateString("es-MX", { day: "numeric", month: "long" })}
+                  {nextMondayDate().toLocaleDateString("es-MX", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  })}
                 </p>
                 <button
                   type="button"

@@ -27,6 +27,7 @@ import {
   readOwn,
   statsFromData,
   todayKey,
+  weekStartKey,
   type PlaytimeConfig,
   type PlaytimeStats,
 } from "@/lib/playtime";
@@ -105,9 +106,8 @@ function summarize(
   const month = monthKey();
   const from = config.observationStart > today ? today : config.observationStart;
   const observedDays = Math.max(1, Math.min(30, daysBetween(from, today) + 1));
-  const weekAgo = new Date();
-  weekAgo.setDate(weekAgo.getDate() - 6);
-  const weekStart = todayKey(weekAgo);
+  // Semana de calendario real: desde el lunes (igual que el límite semanal).
+  const weekStart = weekStartKey();
 
   let monthSec = 0;
   let fromSec = 0;

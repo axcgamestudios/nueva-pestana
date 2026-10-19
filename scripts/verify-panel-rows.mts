@@ -85,7 +85,7 @@ localStorageShim.setItem(
       version: 1,
       observationStart: daysAgo(30),
       enforcementStart: "2999-12-31",
-      defaultMonthlyLimitMinutes: null,
+      defaultWeeklyLimitMinutes: null,
       users: { "u-fantasma": { username: "fantasma", exempt: true } },
     },
     fetchedAt: Date.now(),

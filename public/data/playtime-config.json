@@ -1,44 +1,44 @@
 {
-  "version": 8,
+  "version": 9,
   "observationStart": "2026-10-15",
   "enforcementStart": "2026-10-01",
-  "defaultMonthlyLimitMinutes": 30,
+  "defaultWeeklyLimitMinutes": 30,
   "users": {
     "3cc7c288-d804-4ec4-88ff-33c8f290bc7e": {
       "username": "coste",
-      "monthlyLimitMinutes": 435,
+      "weeklyLimitMinutes": 435,
       "exempt": true,
       "bonusMinutes": {}
     },
     "b3999fcc-16b4-463b-a10a-e5aee186c072": {
       "username": "ranamayor67",
-      "monthlyLimitMinutes": 180,
+      "weeklyLimitMinutes": 180,
       "exempt": false,
       "bonusMinutes": {
-        "2026-10": 60
+        "2026-10-19": 60
       }
     },
     "866ffcf7-31c7-4b98-acdc-c0118098e3c0": {
       "username": "adan",
-      "monthlyLimitMinutes": 570,
+      "weeklyLimitMinutes": 570,
       "exempt": true,
       "bonusMinutes": {}
     },
     "67529afe-c539-43f0-8c0a-453f3bb003bf": {
       "username": "niggaflow_08",
-      "monthlyLimitMinutes": 20,
+      "weeklyLimitMinutes": 20,
       "exempt": true,
       "bonusMinutes": {}
     },
     "061e2815-2335-4827-8553-db39edeab661": {
       "username": "costin0",
-      "monthlyLimitMinutes": 60,
+      "weeklyLimitMinutes": 60,
       "exempt": true,
       "bonusMinutes": {}
     },
     "2b54abb0-b0ff-42cf-845d-26fad5aa8575": {
       "username": "mbappeesca",
-      "monthlyLimitMinutes": 210
+      "weeklyLimitMinutes": 210
     }
   }
 }

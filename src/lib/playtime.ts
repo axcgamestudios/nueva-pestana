@@ -1,5 +1,5 @@
 /**
- * Tiempo de juego: registro, estadísticas y límites mensuales.
+ * Tiempo de juego: registro, estadísticas y límites semanales.
  *
  * Todo es 100% cliente (el sitio es estático, GitHub Pages):
  *
@@ -16,8 +16,9 @@
  *  - LÍMITES: la configuración vive en el repo
  *    (`public/data/playtime-config.json`, editable desde el panel con token
  *    de GitHub). Desde `enforcementStart` cada usuario tiene un tope de
- *    minutos al mes (= límite + bonus); al agotarlo no puede jugar hasta el
- *    mes siguiente. El propio navegador del usuario lo aplica.
+ *    minutos por SEMANA (lunes a domingo; = límite + bonus); al agotarlo
+ *    no puede jugar hasta el lunes siguiente. El propio navegador del
+ *    usuario lo aplica y el contador se reinicia cada lunes.
  */
 
 import { asset } from "@/lib/paths";
@@ -62,11 +63,11 @@ export interface PeerStatsEntry {
 /** Configuración por usuario dentro del JSON del repositorio. */
 export interface PlaytimeUserConfig {
   username?: string;
-  /** Tope mensual en minutos. null → usar el global. */
-  monthlyLimitMinutes?: number | null;
+  /** Tope semanal en minutos (lunes a domingo). null → usar el global. */
+  weeklyLimitMinutes?: number | null;
   /** true → nunca se le bloquea. */
   exempt?: boolean;
-  /** "YYYY-MM" → minutos extra concedidos para ese mes. */
+  /** "YYYY-MM-DD" (lunes) → minutos extra concedidos para esa semana. */
   bonusMinutes?: Record<string, number>;
 }
 
@@ -77,8 +78,8 @@ export interface PlaytimeConfig {
   observationStart: string;
   /** Desde cuándo se aplican los límites (YYYY-MM-DD). */
   enforcementStart: string;
-  /** Tope mensual por defecto en minutos (usuarios sin valor propio). */
-  defaultMonthlyLimitMinutes: number | null;
+  /** Tope semanal por defecto en minutos (usuarios sin valor propio). */
+  defaultWeeklyLimitMinutes: number | null;
   users: Record<string, PlaytimeUserConfig>;
 }
 
@@ -88,18 +89,18 @@ export interface LimitState {
   phase: "observation" | "enforcement";
   /** ¿Se bloquea el juego al agotar el tiempo? */
   active: boolean;
-  /** Tope mensual en minutos (null = sin límite). */
+  /** Tope semanal en minutos (null = sin límite). */
   limitMin: number | null;
-  /** Minutos extra concedidos para el mes en curso (o el primero con límite). */
+  /** Minutos extra concedidos para la semana en curso (o la primera con límites). */
   bonusMin: number;
-  /** Minutos jugados este mes. */
+  /** Minutos jugados esta semana (desde el lunes). */
   usedMin: number;
   /** Minutos restantes (null = sin límite). */
   remainingMin: number | null;
   /** ¿Usuario exento? */
   exempt: boolean;
-  /** Mes al que se aplica el bonus mostrado. */
-  bonusMonth: string;
+  /** Semana (lunes "YYYY-MM-DD") a la que se aplica el bonus mostrado. */
+  bonusPeriod: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -132,6 +133,23 @@ export function monthKey(d = new Date()): string {
   return d.toLocaleDateString("sv-SE").slice(0, 7);
 }
 
+/** Lunes de la semana de una fecha, como "YYYY-MM-DD" (la semana va de
+ *  lunes a domingo y los límites se reinician cada lunes). */
+export function weekStartKey(d = new Date()): string {
+  const copy = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const dow = copy.getDay(); // 0 = domingo
+  copy.setDate(copy.getDate() - (dow === 0 ? 6 : dow - 1));
+  return todayKey(copy);
+}
+
+/** Fecha del próximo lunes (cuando se renueva el tiempo semanal). */
+export function nextMondayDate(from = new Date()): Date {
+  const d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const dow = d.getDay();
+  d.setDate(d.getDate() + (((8 - dow) % 7) || 7));
+  return d;
+}
+
 /** "YYYY-MM-DD" → Date local (para derivar el mes de una fecha de la config). */
 function dateKeyToDate(key: string): Date {
   const [y, m, d] = key.split("-").map((x) => Number.parseInt(x, 10));
@@ -141,12 +159,6 @@ function dateKeyToDate(key: string): Date {
 /** Mes (YYYY-MM) al que pertenece una fecha "YYYY-MM-DD". */
 export function monthOfDateKey(key: string): string {
   return key.slice(0, 7);
-}
-
-/** Días que tiene un mes "YYYY-MM". */
-export function daysInMonth(month: string): number {
-  const [y, m] = month.split("-").map((x) => Number.parseInt(x, 10));
-  return new Date(y, m, 0).getDate();
 }
 
 /** Días transcurridos entre dos fechas "YYYY-MM-DD" (b - a). */
@@ -281,6 +293,17 @@ export function monthSeconds(data: PlaytimeData, month: string): number {
   let total = 0;
   for (const [day, perGame] of Object.entries(data.days)) {
     if (monthOfDateKey(day) !== month) continue;
+    for (const sec of Object.values(perGame)) total += sec;
+  }
+  return total;
+}
+
+/** Segundos jugados desde una fecha (inclusive) hasta hoy: p. ej. desde el
+ *  lunes de esta semana. Es la base del límite semanal. */
+export function secondsSinceKey(data: PlaytimeData, fromDateKey: string): number {
+  let total = 0;
+  for (const [day, perGame] of Object.entries(data.days)) {
+    if (day < fromDateKey) continue;
     for (const sec of Object.values(perGame)) total += sec;
   }
   return total;
@@ -428,7 +451,7 @@ export const FALLBACK_CONFIG: PlaytimeConfig = {
   version: 0,
   observationStart: todayKey(),
   enforcementStart: "2999-12-31", // sin fecha real → nunca bloquea
-  defaultMonthlyLimitMinutes: null,
+  defaultWeeklyLimitMinutes: null,
   users: {},
 };
 
@@ -448,8 +471,15 @@ function normalizeConfig(raw: unknown): PlaytimeConfig | null {
       }
       users[id] = {
         username: typeof c.username === "string" ? c.username : undefined,
-        monthlyLimitMinutes:
-          typeof c.monthlyLimitMinutes === "number" ? c.monthlyLimitMinutes : null,
+        // "weeklyLimitMinutes" es el campo actual; "monthlyLimitMinutes"
+        // es el nombre antiguo (mensual) que se sigue aceptando para
+        // configuraciones cacheadas antes del cambio a semanal.
+        weeklyLimitMinutes:
+          typeof c.weeklyLimitMinutes === "number"
+            ? c.weeklyLimitMinutes
+            : typeof c.monthlyLimitMinutes === "number"
+              ? c.monthlyLimitMinutes
+              : null,
         exempt: c.exempt === true,
         bonusMinutes: bonus,
       };
@@ -461,8 +491,12 @@ function normalizeConfig(raw: unknown): PlaytimeConfig | null {
       typeof r.observationStart === "string" ? r.observationStart : todayKey(),
     enforcementStart:
       typeof r.enforcementStart === "string" ? r.enforcementStart : FALLBACK_CONFIG.enforcementStart,
-    defaultMonthlyLimitMinutes:
-      typeof r.defaultMonthlyLimitMinutes === "number" ? r.defaultMonthlyLimitMinutes : null,
+    defaultWeeklyLimitMinutes:
+      typeof r.defaultWeeklyLimitMinutes === "number"
+        ? r.defaultWeeklyLimitMinutes
+        : typeof r.defaultMonthlyLimitMinutes === "number"
+          ? r.defaultMonthlyLimitMinutes
+          : null,
     users,
   };
 }
@@ -524,17 +558,20 @@ export function enforcementActive(config: PlaytimeConfig): boolean {
 }
 
 /**
- * Mes al que se aplica un bonus concedido HOY:
- * si ya hay límites activos, el mes en curso; si aún estamos en observación,
- * el primer mes con límites (p. ej. bonus dado en octubre → noviembre).
+ * Semana (lunes "YYYY-MM-DD") a la que se aplica un bonus concedido HOY:
+ * si ya hay límites activos, la semana en curso; si aún estamos en
+ * observación, la semana en que arrancan los límites.
  */
-export function activeBonusMonth(config: PlaytimeConfig): string {
-  return enforcementActive(config) ? monthKey() : monthOfDateKey(config.enforcementStart);
+export function activeBonusPeriod(config: PlaytimeConfig): string {
+  return enforcementActive(config)
+    ? weekStartKey()
+    : weekStartKey(dateKeyToDate(config.enforcementStart));
 }
 
 /**
- * Evalúa la situación de un usuario respecto a su límite mensual.
- * `ownData` son SUS datos locales; se recomienda readOwn(userId).
+ * Evalúa la situación de un usuario respecto a su límite SEMANAL
+ * (lunes a domingo). `ownData` son SUS datos locales; se recomienda
+ * readOwn(userId). El contador se reinicia solo cada lunes.
  */
 export function evaluateLimit(
   config: PlaytimeConfig,
@@ -545,13 +582,13 @@ export function evaluateLimit(
   const uc = config.users[userId];
   const exempt = uc?.exempt === true;
   const limitMin =
-    typeof uc?.monthlyLimitMinutes === "number"
-      ? uc.monthlyLimitMinutes
-      : config.defaultMonthlyLimitMinutes;
+    typeof uc?.weeklyLimitMinutes === "number"
+      ? uc.weeklyLimitMinutes
+      : config.defaultWeeklyLimitMinutes;
 
-  const usedMin = monthSeconds(ownData, monthKey()) / 60;
-  const bonusMonth = activeBonusMonth(config);
-  const bonusMin = Math.max(0, uc?.bonusMinutes?.[bonusMonth] ?? 0);
+  const usedMin = secondsSinceKey(ownData, weekStartKey()) / 60;
+  const bonusPeriod = activeBonusPeriod(config);
+  const bonusMin = Math.max(0, uc?.bonusMinutes?.[bonusPeriod] ?? 0);
 
   const remainingMin =
     limitMin === null || limitMin === undefined
@@ -566,28 +603,6 @@ export function evaluateLimit(
     usedMin,
     remainingMin: remainingMin === null ? null : Math.max(0, remainingMin),
     exempt,
-    bonusMonth,
+    bonusPeriod,
   };
-}
-
-/**
- * Límite mensual sugerido (minutos) a partir de la media diaria observada:
- * media diaria desde observationStart proyectada al mes completo.
- */
-export function suggestMonthlyLimitMin(
-  days: Record<string, number>,
-  config: PlaytimeConfig,
-  targetMonth: string
-): number {
-  const today = todayKey();
-  const start = config.observationStart > today ? today : config.observationStart;
-  const observed = daysBetween(start, today) + 1;
-  const total = Object.entries(days)
-    .filter(([day]) => day >= start && day <= today)
-    .reduce((a, [, sec]) => a + sec, 0);
-  const avgDailySec = total / Math.max(1, Math.min(observed, 30));
-  const raw = (avgDailySec / 60) * daysInMonth(targetMonth);
-  // Redondeo a cuartos de hora; mínimo 1 h, máximo 40 h al mes.
-  const rounded = Math.round(raw / 15) * 15;
-  return Math.min(2400, Math.max(60, rounded));
 }
