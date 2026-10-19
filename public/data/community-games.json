@@ -238,25 +238,5 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#22c55e"
-  },
-  {
-    "id": "rocket-league-fcld",
-    "title": "Rocket League",
-    "tagline": ".",
-    "description": ".",
-    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
-    "cover": "/games/community/rocket-league-fcld.jpg",
-    "url": "https://malikahed.github.io/rocket-arena-web/",
-    "categories": [
-      "Casual"
-    ],
-    "tags": [
-      "Casual",
-      "Comunidad"
-    ],
-    "rating": 4.9,
-    "players": "Nuevo",
-    "difficulty": "Media",
-    "accent": "#a78bfa"
   }
 ]
