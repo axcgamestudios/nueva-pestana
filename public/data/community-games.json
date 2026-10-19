@@ -238,5 +238,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#22c55e"
+  },
+  {
+    "id": "rocket-league-ne52",
+    "title": "Rocket League",
+    "tagline": ".",
+    "description": ".",
+    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/rocket-league-ne52.jpg",
+    "url": "https://axcgamestudios.github.io/ra1/",
+    "categories": [
+      "Supervivencia"
+    ],
+    "tags": [
+      "Supervivencia",
+      "Comunidad"
+    ],
+    "rating": 4.9,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#a78bfa"
   }
 ]
