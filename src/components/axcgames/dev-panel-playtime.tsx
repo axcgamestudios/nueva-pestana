@@ -540,27 +540,55 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
 
           {/* Global + acciones */}
           <div className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <div>
-              <label
-                htmlFor="pt-default"
-                className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-white/45"
-              >
-                Límite general (min/semana, usuarios sin valor propio)
-              </label>
-              <input
-                id="pt-default"
-                type="number"
-                min={0}
-                max={43200}
-                value={draft.defaultWeeklyLimitMinutes ?? ""}
-                placeholder="sin límite"
-                onChange={(e) => {
-                  const v = e.target.value.trim();
-                  setDraft({ ...draft, defaultWeeklyLimitMinutes: v === "" ? null : Number(v) });
-                  setDirty(true);
-                }}
-                className="w-40 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
-              />
+            <div className="flex flex-wrap gap-6">
+              <div>
+                <label
+                  htmlFor="pt-default"
+                  className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-white/45"
+                >
+                  Límite general (min/semana, usuarios sin valor propio)
+                </label>
+                <input
+                  id="pt-default"
+                  type="number"
+                  min={0}
+                  max={43200}
+                  value={draft.defaultWeeklyLimitMinutes ?? ""}
+                  placeholder="sin límite"
+                  onChange={(e) => {
+                    const v = e.target.value.trim();
+                    setDraft({ ...draft, defaultWeeklyLimitMinutes: v === "" ? null : Number(v) });
+                    setDirty(true);
+                  }}
+                  className="w-40 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="pt-idle"
+                  className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-white/45"
+                >
+                  Pausa por inactividad (min · 0 = nunca)
+                </label>
+                <input
+                  id="pt-idle"
+                  type="number"
+                  min={0}
+                  max={120}
+                  step={1}
+                  value={draft.idleTimeoutMinutes ?? ""}
+                  placeholder="5"
+                  onChange={(e) => {
+                    const v = e.target.value.trim();
+                    setDraft({ ...draft, idleTimeoutMinutes: v === "" ? null : Number(v) });
+                    setDirty(true);
+                  }}
+                  className="w-40 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
+                />
+                <p className="mt-1.5 text-[11px] leading-relaxed text-white/35">
+                  Sin teclado/ratón/táctil ese tiempo, el contador se pausa.
+                </p>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               <button

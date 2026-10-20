@@ -15,6 +15,7 @@ import {
   Keyboard,
   Maximize2,
   Minimize,
+  Moon,
   RotateCcw,
   Star,
   Users,
@@ -27,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   evaluateLimit,
   formatDuration,
+  idleTimeoutMs,
   loadPlaytimeConfig,
   nextMondayDate,
   readOwn,
@@ -93,6 +95,7 @@ export default function GameView({
   const [loaded, setLoaded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Tiempo de juego: usuario actual, configuración de límites y estado vivo.
   // `limit` y `todaySec` se DERIVAN en cada render de los datos locales
@@ -147,32 +150,82 @@ export default function GameView({
     };
   }, []);
 
-  // Contador de tiempo jugado: suma mientras la pestaña está VISIBLE.
-  // Cada 5 s se añade el tiempo transcurrido; si la pestaña está oculta no
-  // cuenta (no es juego real). recordPlaytime notifica a los suscriptores
-  // y el límite (derivado) se agota en vivo.
+  // Inactividad: el tiempo solo cuenta con interacción reciente. El umbral
+  // viene de la configuración (idleTimeoutMinutes; por defecto 5 min).
+  const idleMs = useMemo(() => idleTimeoutMs(config), [config]);
+  const [idleNow, setIdleNow] = useState(false);
+  // Enlaza los listeners de actividad al documento interno del iframe
+  // (lo llama también onLoad, cuando el juego termina de cargar).
+  const attachIdleRef = useRef<() => void>(() => {});
+
+  // Contador de tiempo jugado: suma mientras la pestaña está VISIBLE y el
+  // jugador está ACTIVO (teclado/ratón/táctil reciente, en la página o
+  // dentro del juego). Si el jugador se ausenta, el contador se PAUSA y
+  // no consume su tope semanal.
   useEffect(() => {
     if (!me) return;
     let lastTick = Date.now();
+    let lastActivity = Date.now();
+    const touch = () => {
+      lastActivity = Date.now();
+      setIdleNow(false);
+    };
+    const EVENTS = ["pointermove", "pointerdown", "keydown", "wheel", "touchstart"] as const;
+    // Actividad en la página (toolbar, scroll…)
+    for (const ev of EVENTS) {
+      document.addEventListener(ev, touch, { passive: true, capture: true });
+    }
+    // Actividad DENTRO del juego: el iframe es del mismo origen en
+    // producción (axcgamestudios.github.io). Si es cross-origin, el
+    // interior no es accesible y solo cuenta la actividad de la página.
+    let frameDoc: Document | null = null;
+    const attachFrame = () => {
+      try {
+        const doc = iframeRef.current?.contentDocument;
+        if (!doc || doc === frameDoc) return;
+        for (const ev of EVENTS) {
+          doc.addEventListener(ev, touch, { passive: true, capture: true });
+        }
+        frameDoc = doc;
+      } catch {
+        /* juego cross-origin: interior no observable */
+      }
+    };
+    attachIdleRef.current = attachFrame;
+    attachFrame();
     const tick = () => {
       const now = Date.now();
       const delta = (now - lastTick) / 1000;
       lastTick = now;
       if (document.hidden) return; // tiempo oculto: no cuenta
       if (delta <= 0 || delta > 60) return; // descartar saltos raros (suspensión)
+      if (idleMs > 0 && now - lastActivity >= idleMs) {
+        setIdleNow(true); // jugador ausente: pausa el contador
+        return;
+      }
       recordPlaytime(me.id, game.id, delta);
     };
     const onVis = () => {
       // Al volver a ser visible, reanudar el conteo desde ahora
       lastTick = Date.now();
+      lastActivity = Date.now();
     };
     const id = setInterval(tick, TRACK_TICK_MS);
     document.addEventListener("visibilitychange", onVis);
     return () => {
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVis);
+      for (const ev of EVENTS) document.removeEventListener(ev, touch, true);
+      try {
+        if (frameDoc) {
+          for (const ev of EVENTS) frameDoc.removeEventListener(ev, touch, true);
+        }
+      } catch {
+        /* el documento interno ya no existe */
+      }
+      attachIdleRef.current = () => {};
     };
-  }, [me?.id, game.id]);
+  }, [me?.id, game.id, idleMs]);
 
   // Avisos únicos al acercarse al límite (15 y 5 minutos)
   useEffect(() => {
@@ -200,11 +253,12 @@ export default function GameView({
 
   const chipLabel = useMemo(() => {
     if (!limit) return "";
+    if (idleNow) return "Pausado por inactividad";
     if (limit.exempt) return "Sin límite";
     if (!limit.active) return `Hoy: ${formatDuration(todaySec)}`;
     if (limit.remainingMin === null) return `Hoy: ${formatDuration(todaySec)}`;
     return `Restan ${formatDuration(limit.remainingMin * 60)} esta semana`;
-  }, [limit, todaySec]);
+  }, [limit, todaySec, idleNow]);
 
   return (
     <motion.main
@@ -238,16 +292,22 @@ export default function GameView({
             {/* Chip de tiempo jugado / restante */}
             {me && chipLabel && (
               <span
-                className={`mr-1 hidden items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold sm:inline-flex ${remainingChipClass(
-                  limit?.active ? limit.remainingMin : null
-                )}`}
+                className={`mr-1 hidden items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold sm:inline-flex ${
+                  idleNow
+                    ? "border-white/15 bg-white/5 text-white/45"
+                    : remainingChipClass(limit?.active ? limit.remainingMin : null)
+                }`}
                 title={
-                  limit?.active && limit.limitMin != null
-                    ? `Límite semanal: ${Math.round(limit.limitMin + limit.bonusMin)} min · jugados ${Math.round(limit.usedMin)} min`
-                    : "Fase de observación: se está midiendo cuánto juegas"
+                  idleNow
+                    ? "Sin actividad detectada: el tiempo está en pausa y no consume tu tope semanal"
+                    : limit?.active && limit.limitMin != null
+                      ? `Límite semanal: ${Math.round(limit.limitMin + limit.bonusMin)} min · jugados ${Math.round(limit.usedMin)} min`
+                      : "Fase de observación: se está midiendo cuánto juegas"
                 }
               >
-                {limit?.active ? (
+                {idleNow ? (
+                  <Moon className="h-3.5 w-3.5" />
+                ) : limit?.active ? (
                   limit.remainingMin !== null && limit.remainingMin <= 15 ? (
                     <AlarmClock className="h-3.5 w-3.5" />
                   ) : (
@@ -335,9 +395,14 @@ export default function GameView({
             <>
               <iframe
                 key={iframeKey}
+                ref={iframeRef}
                 src={game.url}
                 title={game.title}
-                onLoad={() => setLoaded(true)}
+                onLoad={() => {
+                  setLoaded(true);
+                  // Observar también la actividad dentro del juego
+                  attachIdleRef.current();
+                }}
                 className="h-full w-full border-0"
                 allow="fullscreen; autoplay; gamepad *; clipboard-write"
                 allowFullScreen

@@ -14,7 +14,7 @@
  *   POST https://textdb.dev/api/data/<clave>/  → reemplaza el documento
  *
  * Claves (con prefijo aleatorio para que no sean adivinables):
- *   <prefix>-registry  → { v, users: { username: cuenta } }
+ *   <prefix>-registry  → { v, users: { username: cuenta }, devices: { deviceId: vinculo } }
  *   <prefix>-u-<uid>   → datos de juego (PlaytimeData) de cada jugador
  *
  * - REGISTRO: al crear una cuenta se escribe aquí (usuario, hash PBKDF2,
@@ -61,10 +61,20 @@ export interface CloudAccount {
   updatedAt: number;
 }
 
+/** Vínculo dispositivo → cuenta: cada dispositivo puede tener SOLO 1. */
+export interface CloudDeviceBinding {
+  userId: string;
+  username: string;
+  /** epoch ms de cuándo se vinculó. */
+  boundAt: number;
+}
+
 /** Documento de registro compartido. */
 export interface CloudRegistry {
   v: number;
   users: Record<string, CloudAccount>;
+  /** deviceId → cuenta vinculada (1 cuenta por dispositivo). */
+  devices?: Record<string, CloudDeviceBinding>;
 }
 
 /** Instantánea para el panel: cuentas + datos de juego de cada una. */
@@ -115,6 +125,14 @@ async function writeDoc(
 /* Registro de cuentas                                                  */
 /* ------------------------------------------------------------------ */
 
+/** Normaliza un vínculo de dispositivo (o null si no es válido). */
+function normalizeBinding(raw: unknown): CloudDeviceBinding | null {
+  if (!raw || typeof raw !== "object") return null;
+  const b = raw as Record<string, unknown>;
+  if (typeof b.userId !== "string" || typeof b.username !== "string") return null;
+  return { userId: b.userId, username: b.username, boundAt: typeof b.boundAt === "number" ? b.boundAt : 0 };
+}
+
 function normalizeRegistry(raw: unknown): CloudRegistry | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
@@ -143,7 +161,16 @@ function normalizeRegistry(raw: unknown): CloudRegistry | null {
       };
     }
   }
-  return { v: typeof r.v === "number" ? r.v : 2, users };
+  // Preservar los vínculos dispositivo→cuenta (se pierden si no se
+  // reescriben al guardar el registro).
+  const devices: Record<string, CloudDeviceBinding> = {};
+  if (r.devices && typeof r.devices === "object") {
+    for (const [deviceId, d] of Object.entries(r.devices as Record<string, unknown>)) {
+      const binding = normalizeBinding(d);
+      if (binding) devices[deviceId] = binding;
+    }
+  }
+  return { v: typeof r.v === "number" ? r.v : 2, users, devices };
 }
 
 /** Descarga el registro compartido (null si la nube no responde). */
@@ -191,6 +218,51 @@ export async function registerCloudAccount(
     if (after?.users[entry.username]?.id === entry.id) return { ok: true };
   }
   return { ok: false, error: "La base de datos no respondió. Inténtalo de nuevo en un momento." };
+}
+
+/* ------------------------------------------------------------------ */
+/* Vínculos dispositivo → cuenta (1 cuenta por dispositivo)             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Vincula un dispositivo a una cuenta NUEVA (registro). Falla si el
+ * dispositivo ya está vinculado a OTRA cuenta: así un mismo navegador no
+ * puede crear varias cuentas para esquivar los límites de tiempo.
+ */
+export async function claimDevice(
+  deviceId: string,
+  account: { userId: string; username: string }
+): Promise<{ ok: boolean; error?: string }> {
+  if (!deviceId) return { ok: false, error: "Sin identificador de dispositivo." };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const reg = (await fetchRegistry()) ?? { v: 2, users: {} };
+    const prev = reg.devices?.[deviceId];
+    if (prev && prev.userId !== account.userId) {
+      return { ok: false, error: `Este dispositivo ya tiene la cuenta «${prev.username}».` };
+    }
+    reg.devices = { ...reg.devices, [deviceId]: { ...account, boundAt: Date.now() } };
+    const written = await writeDoc(REGISTRY_KEY, reg);
+    if (!written) continue;
+    const after = await fetchRegistry();
+    if (after?.devices?.[deviceId]?.userId === account.userId) return { ok: true };
+  }
+  return { ok: false, error: "La base de datos no respondió al vincular el dispositivo." };
+}
+
+/**
+ * Vincula el dispositivo SOLO si está libre (al iniciar sesión). Si ya
+ * pertenece a otra cuenta no hace nada ni falla: entrar con cuentas
+ * existentes desde cualquier dispositivo sigue permitido; lo que se
+ * limita es CREAR cuentas nuevas.
+ */
+export async function bindDeviceIfFree(
+  deviceId: string,
+  account: { userId: string; username: string }
+): Promise<boolean> {
+  if (!deviceId) return false;
+  const reg = await fetchRegistry();
+  if (reg?.devices?.[deviceId]) return false; // ya vinculado (a esta u otra cuenta)
+  return (await claimDevice(deviceId, account)).ok;
 }
 
 /* ------------------------------------------------------------------ */

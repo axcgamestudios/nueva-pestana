@@ -1,8 +1,9 @@
 {
-  "version": 12,
+  "version": 13,
   "observationStart": "2026-10-15",
   "enforcementStart": "2026-10-01",
   "defaultWeeklyLimitMinutes": 40,
+  "idleTimeoutMinutes": 5,
   "users": {
     "3cc7c288-d804-4ec4-88ff-33c8f290bc7e": {
       "username": "coste",

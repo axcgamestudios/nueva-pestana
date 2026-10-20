@@ -12,6 +12,8 @@
 
 import type { AxUser } from "./store";
 import {
+  bindDeviceIfFree,
+  claimDevice,
   fetchCloudStats,
   fetchRegistry,
   getCachedRegistry,
@@ -24,6 +26,7 @@ import { readOwn } from "./playtime";
 
 const ACCOUNTS_KEY = "axcg:accounts";
 const SESSION_KEY = "axcg:session";
+const DEVICE_ID_KEY = "axcg:device-id";
 const ITERATIONS = 120_000;
 
 export type Account = {
@@ -99,6 +102,25 @@ export function setSession(username: string | null): void {
   }
 }
 
+/**
+ * Identidad estable de ESTE dispositivo/navegador (se genera una vez y se
+ * guarda en localStorage). Sirve para el límite de 1 cuenta por
+ * dispositivo: sobrevive a borrar las cuentas del navegador, porque el
+ * vínculo real vive en la nube.
+ */
+export function getDeviceId(): string {
+  try {
+    let id = localStorage.getItem(DEVICE_ID_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(DEVICE_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return "";
+  }
+}
+
 export function getSessionUser(): AxUser | null {
   if (typeof window === "undefined") return null;
   try {
@@ -143,10 +165,29 @@ export async function registerAccount(
   if (accounts[clean]) {
     return { ok: false, error: "Ese nombre de usuario ya existe en este navegador." };
   }
+  // Límite de 1 cuenta por dispositivo (local): si ya hay cualquier cuenta
+  // en este navegador, no se puede crear otra.
+  const existingNames = Object.keys(accounts);
+  if (existingNames.length > 0) {
+    return {
+      ok: false,
+      error: `Solo se permite 1 cuenta por dispositivo. Este navegador ya tiene la cuenta «${existingNames[0]}»; entra con ella para jugar.`,
+    };
+  }
   // Comprobar también en la nube (la cuenta debe ser única para todos)
   const cloud = await fetchRegistry(6000);
   if (cloud?.users[clean]) {
     return { ok: false, error: "Ese nombre de usuario ya existe (cuenta compartida)." };
+  }
+  // Límite de 1 cuenta por dispositivo (nube): aunque se borren los datos
+  // del navegador, el vínculo dispositivo→cuenta sigue en la nube.
+  const deviceId = getDeviceId();
+  const bound = deviceId ? cloud?.devices?.[deviceId] : undefined;
+  if (bound && bound.username !== clean) {
+    return {
+      ok: false,
+      error: `Este dispositivo ya tiene la cuenta «${bound.username}». Solo se permite 1 cuenta por dispositivo.`,
+    };
   }
   const salt = randomSalt();
   const hash = await derive(password, salt);
@@ -174,6 +215,10 @@ export async function registerAccount(
     updatedAt: Date.now(),
   }).then((res) => {
     if (res.ok) {
+      // Vincular el dispositivo a esta cuenta (1 por dispositivo). Si el
+      // vínculo falla p. ej. porque la nube se cayó, quedará sin vínculo:
+      // el control local de arriba sigue protegiendo en este navegador.
+      void claimDevice(deviceId, { userId: user.id, username: clean });
       const accs = loadAccounts();
       if (accs[clean]) {
         accs[clean].cloudSyncedAt = Date.now();
@@ -237,6 +282,9 @@ export async function loginAccount(
         /* sin nube: estadísticas locales vacías */
       }
       setSession(clean);
+      // Ocupar el vínculo de dispositivo si está libre (para que no se
+      // puedan crear cuentas nuevas aquí después de entrar con una ajena).
+      void bindDeviceIfFree(getDeviceId(), { userId: remote.id, username: remote.username });
       return { ok: true, user };
     }
     return { ok: false, error: "No existe ninguna cuenta con ese usuario." };
@@ -247,6 +295,9 @@ export async function loginAccount(
     return { ok: false, error: "Contraseña incorrecta." };
   }
   setSession(clean);
+  // Ocupar el vínculo de dispositivo si está libre (si este navegador
+  // nunca creó una cuenta, queda reservado para esta con la que entra).
+  void bindDeviceIfFree(getDeviceId(), { userId: account.user.id, username: clean });
   // Al entrar, subir los datos de juego actuales a la nube (por si hubo
   // partidas sin sincronizar) y traer la cuenta al día.
   const user = account.user;

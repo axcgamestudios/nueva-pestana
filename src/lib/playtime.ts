@@ -80,6 +80,8 @@ export interface PlaytimeConfig {
   enforcementStart: string;
   /** Tope semanal por defecto en minutos (usuarios sin valor propio). */
   defaultWeeklyLimitMinutes: number | null;
+  /** Minutos sin interacción antes de pausar el contador (null → 5). */
+  idleTimeoutMinutes?: number | null;
   users: Record<string, PlaytimeUserConfig>;
 }
 
@@ -122,6 +124,19 @@ const SHARE_DAYS = 30;
 const PEER_TTL_MS = 60 * 24 * 60 * 60 * 1000;
 /** Refresco de la configuración (2 min: límites casi en tiempo real). */
 const CONFIG_TTL_MS = 2 * 60 * 1000;
+
+/** Minutos sin interacción antes de considerar al jugador inactivo
+ *  (valor por defecto cuando la configuración no lo indica). */
+export const DEFAULT_IDLE_TIMEOUT_MIN = 5;
+
+/** Milisegundos de inactividad que pausan el contador según la config.
+ *  0 → detección desactivada (nunca se pausa). */
+export function idleTimeoutMs(config: PlaytimeConfig | null): number {
+  const min = config?.idleTimeoutMinutes;
+  if (min === 0) return 0; // apagado explícitamente
+  if (typeof min === "number" && Number.isFinite(min) && min > 0) return min * 60_000;
+  return DEFAULT_IDLE_TIMEOUT_MIN * 60_000;
+}
 
 /** Fecha local "YYYY-MM-DD" (sv-SE da exactamente ISO). */
 export function todayKey(d = new Date()): string {
@@ -452,6 +467,7 @@ export const FALLBACK_CONFIG: PlaytimeConfig = {
   observationStart: todayKey(),
   enforcementStart: "2999-12-31", // sin fecha real → nunca bloquea
   defaultWeeklyLimitMinutes: null,
+  idleTimeoutMinutes: null,
   users: {},
 };
 
@@ -497,6 +513,10 @@ function normalizeConfig(raw: unknown): PlaytimeConfig | null {
         : typeof r.defaultMonthlyLimitMinutes === "number"
           ? r.defaultMonthlyLimitMinutes
           : null,
+    idleTimeoutMinutes:
+      typeof r.idleTimeoutMinutes === "number" && Number.isFinite(r.idleTimeoutMinutes)
+        ? r.idleTimeoutMinutes
+        : null,
     users,
   };
 }

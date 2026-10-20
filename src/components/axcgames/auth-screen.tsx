@@ -195,8 +195,9 @@ export default function AuthScreen() {
             </motion.button>
 
             <p className="text-center text-xs leading-relaxed text-white/40">
-              Solo usuario y contraseña, sin email. Tu cuenta se guarda en la nube:
-              entra desde cualquier dispositivo y tus amigos te encontrarán por tu usuario.
+              {mode === "register"
+                ? "Solo usuario y contraseña, sin email. Máximo 1 cuenta por dispositivo: si ya tienes una, entra con ella."
+                : "Solo usuario y contraseña, sin email. Tu cuenta se guarda en la nube: entra desde cualquier dispositivo y tus amigos te encontrarán por tu usuario."}
             </p>
           </form>
         </div>
