@@ -258,5 +258,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#a78bfa"
+  },
+  {
+    "id": "fnaf-new-world-6weh",
+    "title": "FNAF: New World",
+    "tagline": ".",
+    "description": ".",
+    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/fnaf-new-world-6weh.jpg",
+    "url": "https://axcgamestudios.github.io/FNAW/",
+    "categories": [
+      "Supervivencia"
+    ],
+    "tags": [
+      "Supervivencia",
+      "Comunidad"
+    ],
+    "rating": 4.9,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#38bdf8"
   }
 ]
