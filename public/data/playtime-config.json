@@ -1,5 +1,5 @@
 {
-  "version": 11,
+  "version": 12,
   "observationStart": "2026-10-15",
   "enforcementStart": "2026-10-01",
   "defaultWeeklyLimitMinutes": 40,
@@ -42,6 +42,12 @@
       "exempt": false,
       "bonusMinutes": {
         "2026-10-19": 60
+      }
+    },
+    "c0cb4f71-59f0-4705-bae9-1b968d604f07": {
+      "username": "pollostrike19",
+      "bonusMinutes": {
+        "2026-10-19": 30
       }
     }
   }
