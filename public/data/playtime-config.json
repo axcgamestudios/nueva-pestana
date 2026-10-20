@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 11,
   "observationStart": "2026-10-15",
   "enforcementStart": "2026-10-01",
   "defaultWeeklyLimitMinutes": 40,
@@ -40,7 +40,9 @@
       "username": "mbappeesca",
       "weeklyLimitMinutes": null,
       "exempt": false,
-      "bonusMinutes": {}
+      "bonusMinutes": {
+        "2026-10-19": 60
+      }
     }
   }
 }
