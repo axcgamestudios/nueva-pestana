@@ -278,5 +278,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#38bdf8"
+  },
+  {
+    "id": "worldguessr-dao1",
+    "title": "WorldGuessr",
+    "tagline": ".",
+    "description": ".",
+    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/worldguessr-dao1.jpg",
+    "url": "https://www.worldguessr.com/",
+    "categories": [
+      "Casual"
+    ],
+    "tags": [
+      "Casual",
+      "Comunidad"
+    ],
+    "rating": 4.8,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#eab308"
   }
 ]
