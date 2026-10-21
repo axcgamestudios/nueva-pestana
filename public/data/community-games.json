@@ -318,5 +318,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#38bdf8"
+  },
+  {
+    "id": "pokemon-red-48h8",
+    "title": "Pokemon Red",
+    "tagline": "o si",
+    "description": "o si",
+    "longDescription": "o si Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/pokemon-red-48h8.jpg",
+    "url": "https://adansanchez-dot.github.io/pokemon-red-web/",
+    "categories": [
+      "Aventura"
+    ],
+    "tags": [
+      "Aventura",
+      "Comunidad"
+    ],
+    "rating": 4.7,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#a78bfa"
   }
 ]
