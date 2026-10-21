@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://axcgamestudios.github.io/nueva-pestana"),
   title: "nueva-pestaña",
   description:
-    "Tu página de inicio: juegos, chat y amigos. Kingdom of the Forgotten Seas, Velocity GP, Emergency Strike, Apex Kart, Zona Cero, Jeffcraft y Grand Theft Voxel. Sin descargas, juega al instante en tu navegador.",
+    "Tu página de inicio: juegos, chat y amigos. Kingdom of the Forgotten Seas, Velocity GP, Emergency Strike, Apex Kart, Zona Cero, Minecraft y Grand Theft Voxel. Sin descargas, juega al instante en tu navegador.",
   keywords: [
     "juegos",
     "juegos gratis",
@@ -35,6 +35,7 @@ export const metadata: Metadata = {
     "Apex Kart",
     "Zona Cero",
     "Jeffcraft",
+    "Minecraft",
   ],
   authors: [{ name: "nueva-pestaña" }],
   icons: {
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "nueva-pestaña",
     description:
-      "Tu portal premium: Velocity GP, Emergency Strike, Apex Kart, Zona Cero y Jeffcraft. Juega sin descargas.",
+      "Tu portal premium: Velocity GP, Emergency Strike, Apex Kart, Zona Cero y Minecraft. Juega sin descargas.",
     siteName: "nueva-pestaña",
     type: "website",
     images: [{ url: `${BP}/logo-full.png`, width: 1024, height: 1024 }],

@@ -4,7 +4,7 @@ Portal de juegos estilo Poki con tema dark premium: juega dentro de la página y
 
 ## Qué incluye
 
-- 🎮 **5 juegos embebidos** (iframe con pantalla completa, reinicio y favoritos): Velocity GP, Emergency Strike, Apex Kart, Zona Cero y Jeffcraft.
+- 🎮 **5 juegos embebidos** (iframe con pantalla completa, reinicio y favoritos): Velocity GP, Emergency Strike, Apex Kart, Zona Cero y Minecraft.
 - 👤 **Cuentas reales sin email**: usuario + contraseña hasheada con PBKDF2 (Web Crypto). Las cuentas viven en el navegador del usuario — no hay base de datos.
 - 💬 **Chat estilo Discord sin backend**: amigos, mensajes directos, grupos, escribiendo…, presencia en línea.
 - 📞 **Llamadas de voz y vídeo (WebRTC)** entre usuarios conectados.

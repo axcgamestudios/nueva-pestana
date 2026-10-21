@@ -102,7 +102,7 @@ export default function Footer({ onNavigate }: Props) {
                 <li className="text-white/50">Emergency Strike</li>
                 <li className="text-white/50">Apex Kart</li>
                 <li className="text-white/50">Zona Cero</li>
-                <li className="text-white/50">Jeffcraft</li>
+                <li className="text-white/50">Minecraft</li>
               </ul>
             </div>
           </div>

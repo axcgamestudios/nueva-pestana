@@ -102,14 +102,14 @@ export const games: Game[] = [
   },
   {
     id: "jeffcraft",
-    title: "Jeffcraft",
+    title: "Minecraft",
     tagline: "Construye, mina y sobrevive entre bloques",
     description:
       "Mundo voxel sin límites: mina recursos, construye lo que imagines y sobrevive a la noche en un universo de bloques.",
     longDescription:
-      "Jeffcraft te abandona en un mundo de bloques generado al infinito donde cada montaña, cueva y bosque puede explorarse y destruirse. Recoge madera, piedra y minerales raros para fabricar herramientas cada vez mejores, construye tu refugio antes de que caiga la noche y defiéndelo de todo lo que se mueve en la oscuridad. Sueldos bloques para levantar desde una cabaña humilde hasta un castillo imposible, experimenta con granjas automáticas y redstone, o simplemente recorre el mapa en busca de aldeas y tesoros enterrados. Un sandbox puro donde tú pones las reglas y la creatividad es el único límite.",
+      "Minecraft te abandona en un mundo de bloques generado al infinito donde cada montaña, cueva y bosque puede explorarse y destruirse. Recoge madera, piedra y minerales raros para fabricar herramientas cada vez mejores, construye tu refugio antes de que caiga la noche y defiéndelo de todo lo que se mueve en la oscuridad. Sueldos bloques para levantar desde una cabaña humilde hasta un castillo imposible, experimenta con granjas automáticas y redstone, o simplemente recorre el mapa en busca de aldeas y tesoros enterrados. Un sandbox puro donde tú pones las reglas y la creatividad es el único límite.",
     cover: "/games/jeffcraft.png",
-    url: "https://axcgamestudios.github.io/Google-Classroom/",
+    url: "https://axcgamestudios.github.io/ec18/",
     categories: ["Sandbox", "Supervivencia"],
     tags: ["Voxel", "Construcción", "Minería", "Mundo abierto"],
     rating: 4.9,
