@@ -298,25 +298,5 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#eab308"
-  },
-  {
-    "id": "pac-man-fb40",
-    "title": "Pac-Man",
-    "tagline": "El clásico juego de Pac-Man que todos amamos",
-    "description": "El clásico juego de Pac-Man que todos amamos",
-    "longDescription": "El clásico juego de Pac-Man que todos amamos Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
-    "cover": "/games/community/pac-man-fb40.jpg",
-    "url": "https://github.com/adansanchez-dot/pacman-js",
-    "categories": [
-      "Supervivencia"
-    ],
-    "tags": [
-      "Supervivencia",
-      "Comunidad"
-    ],
-    "rating": 4.9,
-    "players": "Nuevo",
-    "difficulty": "Media",
-    "accent": "#22c55e"
   }
 ]
