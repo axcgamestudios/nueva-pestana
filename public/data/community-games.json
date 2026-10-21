@@ -298,5 +298,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#eab308"
+  },
+  {
+    "id": "pac-man-nnwg",
+    "title": "Pac-Man",
+    "tagline": "shhhhhh",
+    "description": "shhhhhh",
+    "longDescription": "shhhhhh Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/pac-man-nnwg.jpg",
+    "url": "https://adansanchez-dot.github.io/pacman-js/",
+    "categories": [
+      "Casual"
+    ],
+    "tags": [
+      "Casual",
+      "Comunidad"
+    ],
+    "rating": 4.6,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#38bdf8"
   }
 ]
