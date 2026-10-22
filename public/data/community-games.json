@@ -398,5 +398,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#38bdf8"
+  },
+  {
+    "id": "cyberpunk-2d-shooter-ahdy",
+    "title": "Cyberpunk 2D Shooter",
+    "tagline": "Hola",
+    "description": "Hola",
+    "longDescription": "Hola Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/cyberpunk-2d-shooter-ahdy.jpg",
+    "url": "https://yeahdongcn.github.io/night-city-pixel/",
+    "categories": [
+      "Acción"
+    ],
+    "tags": [
+      "Acción",
+      "Comunidad"
+    ],
+    "rating": 4.6,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#f97316"
   }
 ]
