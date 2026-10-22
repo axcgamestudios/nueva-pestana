@@ -358,5 +358,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#eab308"
+  },
+  {
+    "id": "angry-birds-epic-d14g",
+    "title": "Angry birds epic",
+    "tagline": "Angry birds por turnos",
+    "description": "Angry birds por turnos",
+    "longDescription": "Angry birds por turnos Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/angry-birds-epic-d14g.jpg",
+    "url": "https://darkterrayt.github.io/EpicWeb/",
+    "categories": [
+      "Casual"
+    ],
+    "tags": [
+      "Casual",
+      "Comunidad"
+    ],
+    "rating": 4.6,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#eab308"
   }
 ]
