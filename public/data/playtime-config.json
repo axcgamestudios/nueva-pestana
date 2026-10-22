@@ -1,5 +1,5 @@
 {
-  "version": 15,
+  "version": 16,
   "observationStart": "2026-10-15",
   "enforcementStart": "2026-10-01",
   "defaultWeeklyLimitMinutes": 40,
@@ -55,7 +55,15 @@
     },
     "6b824ffe-1390-4007-afbc-b4afa77b764d": {
       "username": "maateorodriguuez",
-      "exempt": true
+      "weeklyLimitMinutes": null,
+      "exempt": true,
+      "bonusMinutes": {}
+    },
+    "2df26999-5c94-4243-910d-d4c23345844f": {
+      "username": "charlie_k",
+      "bonusMinutes": {
+        "2026-10-19": 60
+      }
     }
   }
 }
