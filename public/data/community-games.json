@@ -338,5 +338,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#a78bfa"
+  },
+  {
+    "id": "zelda-js-xaju",
+    "title": "Zelda JS",
+    "tagline": "El zelda viejito",
+    "description": "El zelda viejito",
+    "longDescription": "El zelda viejito Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/zelda-js-xaju.jpg",
+    "url": "https://matthew-sa.github.io/zelda-js/",
+    "categories": [
+      "Aventura"
+    ],
+    "tags": [
+      "Aventura",
+      "Comunidad"
+    ],
+    "rating": 4.7,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#eab308"
   }
 ]
