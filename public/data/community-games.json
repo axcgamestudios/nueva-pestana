@@ -378,5 +378,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#eab308"
+  },
+  {
+    "id": "street-fighter-w90d",
+    "title": "Street Fighter",
+    "tagline": "Ohhhh siiiii",
+    "description": "Ohhhh siiiii",
+    "longDescription": "Ohhhh siiiii Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/street-fighter-w90d.jpg",
+    "url": "https:///gamedev8.github.io/js-sfa/default.htm",
+    "categories": [
+      "Acción"
+    ],
+    "tags": [
+      "Acción",
+      "Comunidad"
+    ],
+    "rating": 4.7,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#38bdf8"
   }
 ]
