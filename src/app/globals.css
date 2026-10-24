@@ -6,9 +6,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-space-grotesk);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-orbitron);
+  --font-display: var(--font-unbounded);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -80,37 +80,37 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
+  --background: oklch(0 0 0);
+  --foreground: oklch(1 0 0);
+  --card: oklch(0.185 0.02 260);
+  --card-foreground: oklch(1 0 0);
+  --popover: oklch(0.16 0.015 260);
+  --popover-foreground: oklch(1 0 0);
+  --primary: oklch(0.623 0.214 259.8);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.24 0.03 260);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --muted: oklch(0.24 0.03 260);
+  --muted-foreground: oklch(0.708 0.02 260);
+  --accent: oklch(0.24 0.03 260);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
+  --ring: oklch(0.623 0.214 259.8);
+  --chart-1: oklch(0.623 0.214 259.8);
+  --chart-2: oklch(0.746 0.16 232.7);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
+  --sidebar: oklch(0.185 0.02 260);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(0.623 0.214 259.8);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.24 0.03 260);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.623 0.214 259.8);
 }
 
 @layer base {
@@ -122,27 +122,27 @@
   }
 }
 
-/* ===== axcgames premium UI v2 ===== */
+/* ===== axcgames premium UI v3 — negro / blanco / azul ===== */
 
-/* Glow pulsante para botones primarios */
+/* Glow pulsante para botones primarios (azul eléctrico) */
 @keyframes axc-glow-pulse {
   0%,
   100% {
     box-shadow:
-      0 0 18px 2px rgba(251, 191, 36, 0.3),
-      0 10px 32px -8px rgba(251, 191, 36, 0.4);
+      0 0 16px 2px rgba(59, 130, 246, 0.28),
+      0 10px 32px -8px rgba(59, 130, 246, 0.38);
   }
   50% {
     box-shadow:
-      0 0 34px 8px rgba(251, 191, 36, 0.55),
-      0 12px 40px -8px rgba(251, 191, 36, 0.6);
+      0 0 30px 7px rgba(59, 130, 246, 0.5),
+      0 12px 42px -8px rgba(59, 130, 246, 0.55);
   }
 }
 .axc-glow {
   animation: axc-glow-pulse 2.8s ease-in-out infinite;
 }
 
-/* Texto dorado con brillo que viaja */
+/* Texto blanco con destello azul que viaja */
 @keyframes axc-text-shimmer {
   0% {
     background-position: 200% center;
@@ -155,9 +155,9 @@
   background: linear-gradient(
     110deg,
     #fff 30%,
-    #fde68a 42%,
-    #fbbf24 50%,
-    #fde68a 58%,
+    #bfdbfe 42%,
+    #3b82f6 50%,
+    #bfdbfe 58%,
     #fff 70%
   );
   background-size: 200% auto;
@@ -227,7 +227,7 @@
   bottom: 5px;
   height: 2px;
   border-radius: 2px;
-  background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+  background: linear-gradient(90deg, transparent, #3b82f6, transparent);
   transition:
     left 0.28s ease,
     right 0.28s ease;
@@ -248,10 +248,10 @@
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
-    rgba(251, 191, 36, 0.45) 38deg,
+    rgba(59, 130, 246, 0.5) 38deg,
     transparent 80deg,
     transparent 170deg,
-    rgba(251, 191, 36, 0.28) 215deg,
+    rgba(96, 165, 250, 0.32) 215deg,
     transparent 260deg
   );
   animation: axc-spin-slow 16s linear infinite;
@@ -271,7 +271,7 @@
 
 /* ===== axcgames premium dark ===== */
 ::selection {
-  background: rgba(251, 191, 36, 0.35);
+  background: rgba(59, 130, 246, 0.45);
   color: #fff;
 }
 
@@ -285,15 +285,15 @@ html {
   height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  background: #000;
 }
 ::-webkit-scrollbar-thumb {
-  background: #262626;
+  background: #1e2a3f;
   border-radius: 8px;
-  border: 2px solid #0a0a0a;
+  border: 2px solid #000;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f3f;
+  background: #3b82f6;
 }
 
 /* Subtle animated glow for hero */
@@ -400,12 +400,12 @@ html {
 
 .axc-grid {
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    linear-gradient(to right, rgba(96, 165, 250, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(96, 165, 250, 0.055) 1px, transparent 1px);
   background-size: 44px 44px;
-  mask-image: radial-gradient(ellipse 90% 70% at 50% 20%, black 30%, transparent 75%);
-  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 20%, black 30%, transparent 75%);
-  animation: axc-grid-pan 60s linear infinite;
+  mask-image: radial-gradient(ellipse 100% 80% at 50% 25%, black 25%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 100% 80% at 50% 25%, black 25%, transparent 78%);
+  animation: axc-grid-pan 70s linear infinite;
 }
 @keyframes axc-grid-pan {
   0% {
@@ -429,6 +429,44 @@ html {
 }
 .axc-msg-in {
   animation: axc-msg-in 0.22s cubic-bezier(0.21, 1.02, 0.73, 1) both;
+}
+
+/* Aparición suave al hacer scroll (secciones) */
+@keyframes axc-rise-in {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.axc-rise-in {
+  animation: axc-rise-in 0.55s cubic-bezier(0.22, 0.68, 0.32, 1) both;
+}
+
+/* Línea de acento que se enciende (títulos de sección) */
+.axc-accent-bar {
+  box-shadow:
+    0 0 12px 1px rgba(59, 130, 246, 0.55),
+    0 0 28px 2px rgba(59, 130, 246, 0.25);
+}
+
+/* Subrayado azul que crece bajo los títulos de sección */
+@keyframes axc-bar-grow {
+  from {
+    transform: scaleY(0.2);
+    opacity: 0.4;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+.axc-bar-grow {
+  transform-origin: top;
+  animation: axc-bar-grow 0.5s ease-out both;
 }
 
 @keyframes axc-typing-dot {
@@ -455,13 +493,13 @@ html {
 
 @keyframes axc-ring-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.55);
   }
   70% {
-    box-shadow: 0 0 0 22px rgba(251, 191, 36, 0);
+    box-shadow: 0 0 0 22px rgba(59, 130, 246, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
   }
 }
 .axc-ring-pulse {
@@ -543,7 +581,9 @@ html {
   .axc-spin-slow,
   .axc-float,
   .axc-frame::before,
-  .axc-card-lift {
+  .axc-card-lift,
+  .axc-rise-in,
+  .axc-bar-grow {
     animation: none !important;
     transition: none !important;
   }

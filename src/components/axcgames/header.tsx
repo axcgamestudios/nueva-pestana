@@ -84,7 +84,7 @@ export default function Header({
         placeholder="Buscar juegos..."
         aria-label="Buscar juegos"
         autoComplete="off"
-        className="w-full rounded-full border border-white/10 bg-white/5 py-2 pl-10 pr-10 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-amber-400/60 focus:bg-white/[0.08] focus:ring-2 focus:ring-amber-400/25"
+        className="w-full rounded-full border border-white/10 bg-white/5 py-2 pl-10 pr-10 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-blue-400/60 focus:bg-white/[0.08] focus:ring-2 focus:ring-blue-400/25"
       />
       {query && (
         <button
@@ -100,7 +100,7 @@ export default function Header({
   );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#050505]/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#000]/85 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
         {/* Logo */}
         <motion.button
@@ -111,7 +111,7 @@ export default function Header({
           whileTap={{ scale: 0.97 }}
           className="group flex shrink-0 items-center gap-2.5"
         >
-          <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-amber-400/30 shadow-lg shadow-amber-500/20 transition-shadow duration-300 group-hover:shadow-amber-400/50">
+          <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-blue-400/30 shadow-lg shadow-blue-500/20 transition-shadow duration-300 group-hover:shadow-blue-500/50">
             <Image
               src={asset("/logo-emblem.png")}
               alt="Logotipo de AXC GAMES"
@@ -123,7 +123,7 @@ export default function Header({
           </span>
           <span className="font-display text-lg font-extrabold tracking-wider">
             <span className="text-white">AXC</span>
-            <span className="text-amber-400 transition-colors group-hover:text-amber-300">GAMES</span>
+            <span className="text-blue-400 transition-colors group-hover:text-blue-300">GAMES</span>
           </span>
         </motion.button>
 
@@ -153,7 +153,7 @@ export default function Header({
             <Heart className="h-4 w-4" />
             Favoritos
             {favoritesCount > 0 && (
-              <span className="axc-badge-pop flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-extrabold text-black">
+              <span className="axc-badge-pop flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-500 px-1.5 text-[11px] font-extrabold text-white">
                 {favoritesCount}
               </span>
             )}
@@ -183,18 +183,18 @@ export default function Header({
               }
               className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition active:scale-95 ${
                 perm === "granted"
-                  ? "border-amber-400/50 bg-amber-400/10 text-amber-300"
+                  ? "border-blue-400/50 bg-blue-400/10 text-blue-300"
                   : perm === "denied"
                     ? "border-white/10 bg-white/5 text-white/40"
-                    : "border-white/10 bg-white/5 text-white/70 hover:border-amber-400/40 hover:text-amber-300"
+                    : "border-white/10 bg-white/5 text-white/70 hover:border-blue-400/40 hover:text-blue-300"
               }`}
             >
               {perm === "denied" ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
               {perm === "granted" && (
-                <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#050505] bg-emerald-400" />
+                <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#000] bg-emerald-400" />
               )}
               {!inChat && totalUnread > 0 && perm !== "granted" && (
-                <span className="axc-badge-pop absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-extrabold text-black shadow-lg">
+                <span className="axc-badge-pop absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-500 px-1.5 text-[11px] font-extrabold text-white shadow-lg">
                   {totalUnread > 99 ? "99+" : totalUnread}
                 </span>
               )}
@@ -209,14 +209,14 @@ export default function Header({
             aria-label={inChat ? "Volver a los juegos" : "Abrir el chat"}
             className={`relative flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold transition ${
               inChat
-                ? "border-amber-400/60 bg-amber-400/15 text-amber-300"
-                : "border-white/10 bg-white/5 text-white/75 hover:border-amber-400/40 hover:text-amber-300"
+                ? "border-blue-400/60 bg-blue-400/15 text-blue-300"
+                : "border-white/10 bg-white/5 text-white/75 hover:border-blue-400/40 hover:text-blue-300"
             }`}
           >
             <MessageSquare className="h-4 w-4" />
             <span className="hidden sm:inline">{inChat ? "Juegos" : "Chat"}</span>
             {!inChat && totalUnread > 0 && (
-              <span className="axc-badge-pop absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-extrabold text-black shadow-lg">
+              <span className="axc-badge-pop absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-500 px-1.5 text-[11px] font-extrabold text-white shadow-lg">
                 {totalUnread > 99 ? "99+" : totalUnread}
               </span>
             )}
@@ -240,7 +240,7 @@ export default function Header({
               aria-haspopup="menu"
               aria-expanded={userMenuOpen}
               aria-label="Menú de usuario"
-              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 py-1.5 pl-1.5 pr-3 transition hover:border-amber-400/40"
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 py-1.5 pl-1.5 pr-3 transition hover:border-blue-400/40"
             >
               <Avatar displayName={me.displayName} color={me.avatarColor} size={28} online={socketConnected} />
               <span className="hidden max-w-28 truncate text-sm font-semibold text-white/85 sm:block">
@@ -304,7 +304,7 @@ export default function Header({
               e.preventDefault();
               openAuth();
             }}
-            className="axc-shine relative flex items-center gap-1.5 overflow-hidden rounded-full bg-amber-400 px-4 py-2 text-sm font-bold text-black shadow-lg shadow-amber-400/25 transition hover:bg-amber-300 hover:shadow-amber-400/50 active:scale-95"
+            className="axc-shine relative flex items-center gap-1.5 overflow-hidden rounded-full bg-blue-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-400 hover:shadow-blue-500/50 active:scale-95"
           >
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Entrar</span>

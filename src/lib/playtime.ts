@@ -395,7 +395,7 @@ export function ingestPeerStats(
     userId: user.id,
     username: user.username,
     displayName: user.displayName || user.username,
-    avatarColor: user.avatarColor || "#f59e0b",
+    avatarColor: user.avatarColor || "#3b82f6",
     stats,
     seenAt: Date.now(),
   };
@@ -438,7 +438,7 @@ export function ingestPeerIdentity(
       userId: user.id,
       username: user.username,
       displayName,
-      avatarColor: user.avatarColor || prev.avatarColor || "#f59e0b",
+      avatarColor: user.avatarColor || prev.avatarColor || "#3b82f6",
       stats: prev.stats,
       seenAt: now,
     };
@@ -447,7 +447,7 @@ export function ingestPeerIdentity(
       userId: user.id,
       username: user.username,
       displayName,
-      avatarColor: user.avatarColor || "#f59e0b",
+      avatarColor: user.avatarColor || "#3b82f6",
       stats: { d: {}, g: {}, t: 0, up: 0 },
       seenAt: now,
     };

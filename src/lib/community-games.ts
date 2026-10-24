@@ -39,7 +39,7 @@ function normalize(raw: RawGame): Game | null {
     rating: typeof raw.rating === "number" ? raw.rating : 4.5,
     players: typeof raw.players === "string" ? raw.players : "Nuevo",
     difficulty: typeof raw.difficulty === "string" ? raw.difficulty : "Media",
-    accent: typeof raw.accent === "string" ? raw.accent : "#fbbf24",
+    accent: typeof raw.accent === "string" ? raw.accent : "#60a5fa",
   };
 }
 

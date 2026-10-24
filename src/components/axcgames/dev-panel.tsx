@@ -432,7 +432,7 @@ export default function DevPanel() {
         rating: Math.round((4.5 + Math.random() * 0.4) * 10) / 10,
         players: "Nuevo",
         difficulty: "Media",
-        accent: ACCENTS[Math.floor(Math.random() * ACCENTS.length)] ?? "#fbbf24",
+        accent: ACCENTS[Math.floor(Math.random() * ACCENTS.length)] ?? "#60a5fa",
       };
 
       try {
@@ -573,11 +573,11 @@ export default function DevPanel() {
           <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
             <div className="flex items-center gap-2.5">
               {phase === "password" || phase === "token" ? (
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-400/10 text-amber-400">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-400/10 text-blue-400">
                   <Lock className="h-4 w-4" />
                 </span>
               ) : (
-                <span className="axc-pulse h-2 w-2 rounded-full bg-amber-400" />
+                <span className="axc-pulse h-2 w-2 rounded-full bg-blue-500" />
               )}
               <h2 className="font-display text-sm font-bold uppercase tracking-[0.25em] text-white/90">
                 {phase === "password"
@@ -600,7 +600,7 @@ export default function DevPanel() {
           {/* Cuerpo */}
           <div className="flex-1 overflow-y-auto px-6 py-5">
             {busy && (
-              <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm text-amber-300">
+              <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-blue-400/20 bg-blue-400/5 px-4 py-3 text-sm text-blue-300">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {busy}
               </div>
@@ -636,13 +636,13 @@ export default function DevPanel() {
                   }}
                   placeholder="Contraseña"
                   aria-label="Contraseña"
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 focus:border-blue-400/60 focus:outline-none"
                 />
                 {pwdError && <p className="text-sm text-red-400">{pwdError}</p>}
                 <button
                   type="submit"
                   disabled={!pwd || Boolean(busy)}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 py-3 font-display text-sm font-bold tracking-widest text-black transition hover:bg-amber-300 active:scale-95 disabled:opacity-40"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 px-5 py-3 font-display text-sm font-bold tracking-wide text-white transition hover:bg-blue-400 active:scale-95 disabled:opacity-40"
                 >
                   ENTRAR
                 </button>
@@ -671,12 +671,12 @@ export default function DevPanel() {
                   onChange={(e) => setToken(e.target.value)}
                   placeholder="ghp_… o github_pat_…"
                   aria-label="Token de acceso de GitHub"
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-mono text-sm text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-mono text-sm text-white placeholder:text-white/30 focus:border-blue-400/60 focus:outline-none"
                 />
                 <button
                   type="submit"
                   disabled={!token.trim() || Boolean(busy)}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 py-3 font-display text-sm font-bold tracking-widest text-black transition hover:bg-amber-300 active:scale-95 disabled:opacity-40"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 px-5 py-3 font-display text-sm font-bold tracking-wide text-white transition hover:bg-blue-400 active:scale-95 disabled:opacity-40"
                 >
                   GUARDAR Y CONTINUAR
                 </button>
@@ -700,7 +700,7 @@ export default function DevPanel() {
                       onClick={() => setTab(id)}
                       className={`rounded-full border px-4 py-1.5 text-xs font-bold tracking-wide transition active:scale-95 ${
                         tab === id
-                          ? "border-amber-400 bg-amber-400 text-black"
+                          ? "border-blue-400 bg-blue-500 text-white"
                           : "border-white/10 bg-white/5 text-white/60 hover:border-white/25 hover:text-white"
                       }`}
                     >
@@ -725,7 +725,7 @@ export default function DevPanel() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Ej. Ninja Rush"
-                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-blue-400/60 focus:outline-none"
                     />
                   </div>
 
@@ -739,7 +739,7 @@ export default function DevPanel() {
                       onChange={(e) => setDesc(e.target.value)}
                       placeholder="Descripción corta que se verá en la tarjeta del juego…"
                       rows={2}
-                      className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
+                      className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-blue-400/60 focus:outline-none"
                     />
                   </div>
 
@@ -747,7 +747,7 @@ export default function DevPanel() {
                     <label htmlFor="dev-link" className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-white/50">
                       Link del juego
                     </label>
-                    <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 focus-within:border-amber-400/60">
+                    <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 focus-within:border-blue-400/60">
                       <ExternalLink className="h-4 w-4 shrink-0 text-white/35" />
                       <input
                         id="dev-link"
@@ -777,7 +777,7 @@ export default function DevPanel() {
                             aria-pressed={cat === c}
                             className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition active:scale-95 ${
                               cat === c
-                                ? "border-amber-400 bg-amber-400 text-black"
+                                ? "border-blue-400 bg-blue-500 text-white"
                                 : "border-white/10 bg-white/5 text-white/60 hover:border-white/25 hover:text-white"
                             }`}
                           >
@@ -808,7 +808,7 @@ export default function DevPanel() {
                         </button>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.03] px-4 py-6 text-center transition hover:border-amber-400/40 hover:bg-amber-400/5">
+                      <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.03] px-4 py-6 text-center transition hover:border-blue-400/40 hover:bg-blue-400/5">
                         <ImagePlus className="h-6 w-6 text-white/40" />
                         <span className="text-sm text-white/55">
                           Elige la imagen de portada del juego
@@ -827,7 +827,7 @@ export default function DevPanel() {
                           onChange={(e) => {
                             void onCoverChange(e.target.files?.[0] ?? null);
                           }}
-                          className="mt-1 block w-full text-xs text-white/40 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-amber-400/15 file:px-4 file:py-2 file:text-xs file:font-bold file:text-amber-300 hover:file:bg-amber-400/25"
+                          className="mt-1 block w-full text-xs text-white/40 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-blue-400/15 file:px-4 file:py-2 file:text-xs file:font-bold file:text-blue-300 hover:file:bg-blue-400/25"
                         />
                       </div>
                     )}
@@ -836,7 +836,7 @@ export default function DevPanel() {
                   <button
                     type="submit"
                     disabled={Boolean(busy) || !name.trim() || !desc.trim() || !link.trim() || !coverB64}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 py-3 font-display text-sm font-bold tracking-widest text-black shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 active:scale-95 disabled:opacity-40"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 px-5 py-3 font-display text-sm font-bold tracking-wide text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 active:scale-95 disabled:opacity-40"
                   >
                     <UploadCloud className="h-4 w-4" />
                     {busy ? "PUBLICANDO…" : "PUBLICAR JUEGO"}

@@ -48,7 +48,7 @@ export default function AuthScreen() {
         <div className="overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/70 shadow-2xl shadow-black backdrop-blur-xl">
           {/* Cabecera */}
           <div className="relative border-b border-white/10 px-8 pb-6 pt-8 text-center">
-            <span className="relative mx-auto mb-4 block h-16 w-16 overflow-hidden rounded-2xl border border-amber-400/30 shadow-xl shadow-amber-500/25">
+            <span className="relative mx-auto mb-4 block h-16 w-16 overflow-hidden rounded-2xl border border-blue-400/30 shadow-xl shadow-blue-500/25">
               <Image
                 src={asset("/logo-emblem.png")}
                 alt="Logotipo de AXC GAMES"
@@ -60,7 +60,7 @@ export default function AuthScreen() {
             </span>
             <h1 className="font-display text-2xl font-black tracking-wider text-white">
               <span>AXC</span>
-              <span className="text-amber-400">GAMES</span>
+              <span className="text-blue-400">GAMES</span>
             </h1>
             <p className="mt-1.5 text-sm text-white/50">
               {activeGame
@@ -94,14 +94,14 @@ export default function AuthScreen() {
                   setError(null);
                 }}
                 className={`relative flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
-                  mode === id ? "text-black" : "text-white/60 hover:bg-white/5 hover:text-white"
+                  mode === id ? "text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 {mode === id && (
                   <motion.span
                     layoutId="auth-tab-pill"
                     transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                    className="absolute inset-0 rounded-xl bg-amber-400 shadow-lg shadow-amber-400/25"
+                    className="absolute inset-0 rounded-xl bg-blue-500 shadow-lg shadow-blue-500/25"
                   />
                 )}
                 <Icon className="relative h-4 w-4" />
@@ -124,7 +124,7 @@ export default function AuthScreen() {
                 placeholder="ej: shadowrider"
                 autoComplete="username"
                 autoFocus
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-amber-400/60 focus:bg-white/[0.07] focus:ring-2 focus:ring-amber-400/25"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-blue-400/60 focus:bg-white/[0.07] focus:ring-2 focus:ring-blue-400/25"
               />
             </div>
 
@@ -145,7 +145,7 @@ export default function AuthScreen() {
                   placeholder="¿Cómo te llaman?"
                   autoComplete="nickname"
                   maxLength={24}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-amber-400/60 focus:bg-white/[0.07] focus:ring-2 focus:ring-amber-400/25"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-blue-400/60 focus:bg-white/[0.07] focus:ring-2 focus:ring-blue-400/25"
                 />
               </motion.div>
             )}
@@ -163,7 +163,7 @@ export default function AuthScreen() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={mode === "register" ? "Mínimo 6 caracteres" : "Tu contraseña"}
                   autoComplete={mode === "register" ? "new-password" : "current-password"}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-amber-400/60 focus:bg-white/[0.07] focus:ring-2 focus:ring-amber-400/25"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-blue-400/60 focus:bg-white/[0.07] focus:ring-2 focus:ring-blue-400/25"
                 />
               </div>
             </div>
@@ -184,7 +184,7 @@ export default function AuthScreen() {
               disabled={loading || !username.trim() || !password}
               whileHover={{ scale: loading ? 1 : 1.02 }}
               whileTap={{ scale: loading ? 1 : 0.97 }}
-              className="axc-shine axc-glow relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-amber-400 px-6 py-3.5 font-display text-sm font-bold tracking-widest text-black disabled:cursor-not-allowed disabled:opacity-50"
+              className="axc-shine axc-glow relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-blue-500 px-6 py-3.5 font-display text-sm font-bold tracking-wide text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

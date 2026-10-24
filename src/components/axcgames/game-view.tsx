@@ -55,7 +55,7 @@ const TRACK_TICK_MS = 5_000;
 function remainingChipClass(remainingMin: number | null): string {
   if (remainingMin === null) return "border-white/10 bg-white/5 text-white/55";
   if (remainingMin > 60) return "border-white/10 bg-white/5 text-white/70";
-  if (remainingMin > 15) return "border-amber-400/40 bg-amber-400/10 text-amber-300";
+  if (remainingMin > 15) return "border-blue-400/40 bg-blue-400/10 text-blue-300";
   if (remainingMin > 0) return "border-orange-400/50 bg-orange-400/10 text-orange-300";
   return "border-red-500/50 bg-red-500/10 text-red-400";
 }
@@ -73,7 +73,7 @@ function ControlButton({
 }) {
   const className = `flex h-9 w-9 items-center justify-center rounded-full border transition active:scale-90 ${
     active
-      ? "border-amber-400/60 bg-amber-400/15 text-amber-400"
+      ? "border-blue-400/60 bg-blue-400/15 text-blue-400"
       : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
   }`;
   return (
@@ -270,7 +270,7 @@ export default function GameView({
       className="relative z-10 flex flex-1 flex-col"
     >
       {/* Game toolbar */}
-      <div className="sticky top-16 z-40 border-b border-white/10 bg-[#050505]/90 backdrop-blur-xl">
+      <div className="sticky top-16 z-40 border-b border-white/10 bg-[#000]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1440px] items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-6">
           <button
             type="button"
@@ -374,7 +374,7 @@ export default function GameView({
                   . Vuelve el lunes para seguir jugando.
                 </p>
                 <p className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/50">
-                  <CalendarClock className="h-3.5 w-3.5 text-amber-400/80" />
+                  <CalendarClock className="h-3.5 w-3.5 text-blue-400/80" />
                   Tu tiempo se renueva el{" "}
                   {nextMondayDate().toLocaleDateString("es-MX", {
                     weekday: "long",
@@ -385,7 +385,7 @@ export default function GameView({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="mt-2 rounded-full bg-amber-400 px-6 py-2.5 text-sm font-bold text-black transition hover:bg-amber-300 active:scale-95"
+                  className="mt-2 rounded-full bg-blue-500 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-blue-400 active:scale-95"
                 >
                   Volver al inicio
                 </button>
@@ -420,7 +420,7 @@ export default function GameView({
                     className="object-cover opacity-15 blur-md"
                   />
                   <div className="relative flex flex-col items-center gap-4">
-                    <span className="relative h-16 w-16 overflow-hidden rounded-2xl border border-amber-400/40 shadow-xl shadow-amber-500/25">
+                    <span className="relative h-16 w-16 overflow-hidden rounded-2xl border border-blue-400/40 shadow-xl shadow-blue-500/25">
                       <Image
                         src={asset("/logo-emblem.png")}
                         alt="Logotipo de AXC GAMES"
@@ -430,7 +430,7 @@ export default function GameView({
                       />
                     </span>
                     <div className="h-1 w-44 overflow-hidden rounded-full bg-white/10">
-                      <div className="axc-loading-bar h-full w-1/3 rounded-full bg-amber-400" />
+                      <div className="axc-loading-bar h-full w-1/3 rounded-full bg-blue-500" />
                     </div>
                     <p className="text-sm text-white/60">
                       Cargando <b className="text-white">{game.title}</b>…
@@ -460,7 +460,7 @@ export default function GameView({
               ))}
             </div>
             <div className="mt-6 flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/55">
-              <Keyboard className="mt-0.5 h-4 w-4 shrink-0 text-amber-400/80" />
+              <Keyboard className="mt-0.5 h-4 w-4 shrink-0 text-blue-400/80" />
               <p>
                 Juega con teclado y ratón; en dispositivos táctiles, simplemente toca la
                 pantalla. El juego se ejecuta dentro de axcgames: si ves la pantalla oscura un
@@ -477,7 +477,7 @@ export default function GameView({
               <ul className="mt-4 space-y-3.5 text-sm">
                 <li className="flex items-center justify-between gap-3">
                   <span className="flex items-center gap-2 text-white/50">
-                    <Star className="h-4 w-4 text-amber-400" fill="currentColor" />
+                    <Star className="h-4 w-4 text-blue-400" fill="currentColor" />
                     Valoración
                   </span>
                   <b className="text-white">{game.rating} / 5</b>
@@ -506,8 +506,8 @@ export default function GameView({
               </ul>
             </div>
 
-            <div className="rounded-2xl border border-amber-400/20 bg-amber-400/[0.06] p-5">
-              <h3 className="font-display text-sm font-bold tracking-wide text-amber-300">
+            <div className="rounded-2xl border border-blue-400/20 bg-blue-400/[0.06] p-5">
+              <h3 className="font-display text-sm font-bold tracking-wide text-blue-300">
                 CONSEJO PRO
               </h3>
               <p className="mt-2.5 text-sm leading-relaxed text-white/65">

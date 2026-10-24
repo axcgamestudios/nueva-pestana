@@ -17,7 +17,7 @@ export default function Footer({ onNavigate }: Props) {
         <div className="flex flex-col items-start justify-between gap-10 md:flex-row">
           <div className="max-w-sm">
             <div className="flex items-center gap-3">
-              <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-amber-400/30 shadow-lg shadow-amber-500/20">
+              <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-blue-400/30 shadow-lg shadow-blue-500/20">
                 <Image
                   src={asset("/logo-emblem.png")}
                   alt="Logotipo de AXC GAMES"
@@ -28,7 +28,7 @@ export default function Footer({ onNavigate }: Props) {
               </span>
               <span className="font-display text-lg font-extrabold tracking-wider">
                 <span className="text-white">AXC</span>
-                <span className="text-amber-400">GAMES</span>
+                <span className="text-blue-400">GAMES</span>
               </span>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-white/50">
@@ -39,7 +39,7 @@ export default function Footer({ onNavigate }: Props) {
 
           <div className="grid grid-cols-2 gap-x-14 gap-y-8 sm:grid-cols-3">
             <div>
-              <h3 className="font-display text-xs font-bold uppercase tracking-widest text-white/85">
+              <h3 className="font-display text-xs font-bold uppercase tracking-wide text-white/85">
                 Navegación
               </h3>
               <ul className="mt-4 space-y-2.5 text-sm">
@@ -47,7 +47,7 @@ export default function Footer({ onNavigate }: Props) {
                   <button
                     type="button"
                     onClick={() => onNavigate("inicio")}
-                    className="text-white/50 transition hover:text-amber-400"
+                    className="text-white/50 transition hover:text-blue-400"
                   >
                     Inicio
                   </button>
@@ -56,7 +56,7 @@ export default function Footer({ onNavigate }: Props) {
                   <button
                     type="button"
                     onClick={() => onNavigate("juegos")}
-                    className="text-white/50 transition hover:text-amber-400"
+                    className="text-white/50 transition hover:text-blue-400"
                   >
                     Todos los juegos
                   </button>
@@ -65,7 +65,7 @@ export default function Footer({ onNavigate }: Props) {
                   <button
                     type="button"
                     onClick={() => onNavigate("favoritos")}
-                    className="flex items-center gap-1.5 text-white/50 transition hover:text-amber-400"
+                    className="flex items-center gap-1.5 text-white/50 transition hover:text-blue-400"
                   >
                     <Heart className="h-3.5 w-3.5" />
                     Favoritos
@@ -75,7 +75,7 @@ export default function Footer({ onNavigate }: Props) {
             </div>
 
             <div>
-              <h3 className="font-display text-xs font-bold uppercase tracking-widest text-white/85">
+              <h3 className="font-display text-xs font-bold uppercase tracking-wide text-white/85">
                 Categorías
               </h3>
               <ul className="mt-4 space-y-2.5 text-sm">
@@ -84,7 +84,7 @@ export default function Footer({ onNavigate }: Props) {
                     <button
                       type="button"
                       onClick={() => onNavigate("juegos")}
-                      className="text-white/50 transition hover:text-amber-400"
+                      className="text-white/50 transition hover:text-blue-400"
                     >
                       {cat}
                     </button>
@@ -94,7 +94,7 @@ export default function Footer({ onNavigate }: Props) {
             </div>
 
             <div>
-              <h3 className="font-display text-xs font-bold uppercase tracking-widest text-white/85">
+              <h3 className="font-display text-xs font-bold uppercase tracking-wide text-white/85">
                 Juegos
               </h3>
               <ul className="mt-4 space-y-2.5 text-sm">
@@ -112,7 +112,7 @@ export default function Footer({ onNavigate }: Props) {
           <p>© {year} axcgames. Todos los derechos reservados.</p>
           <p className="flex items-center gap-1.5">
             Hecho para jugadores, por jugadores
-            <Heart className="h-3.5 w-3.5 text-amber-400/70" fill="currentColor" />
+            <Heart className="h-3.5 w-3.5 text-blue-400/70" fill="currentColor" />
           </p>
         </div>
       </div>

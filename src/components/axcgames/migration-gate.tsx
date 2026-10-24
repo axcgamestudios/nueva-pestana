@@ -72,12 +72,12 @@ export default function MigrationGate({ game, onClose, onMigrated }: Props) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.97 }}
             transition={{ type: "spring", damping: 26, stiffness: 300 }}
-            className="relative w-full max-w-md overflow-hidden rounded-3xl border border-amber-400/25 bg-[#0c0a06]/95 shadow-2xl shadow-black"
+            className="relative w-full max-w-md overflow-hidden rounded-3xl border border-blue-400/25 bg-[#0c0a06]/95 shadow-2xl shadow-black"
           >
             {/* brillo superior decorativo */}
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-amber-400/15 to-transparent"
+              className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-blue-400/15 to-transparent"
             />
             <button
               type="button"
@@ -93,9 +93,9 @@ export default function MigrationGate({ game, onClose, onMigrated }: Props) {
                 <motion.span
                   animate={{ y: [0, -5, 0] }}
                   transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-                  className="flex h-16 w-16 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 shadow-xl shadow-amber-400/20"
+                  className="flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-400/30 bg-blue-400/10 shadow-xl shadow-blue-500/20"
                 >
-                  <CloudUpload className="h-7 w-7 text-amber-400" />
+                  <CloudUpload className="h-7 w-7 text-blue-400" />
                 </motion.span>
                 <h2 id="gate-title" className="mt-5 font-display text-xl font-black tracking-wide text-white">
                   Actualiza tu cuenta para jugar
@@ -126,7 +126,7 @@ export default function MigrationGate({ game, onClose, onMigrated }: Props) {
                 type="button"
                 onClick={() => void migrate()}
                 disabled={busy}
-                className="axc-shine relative mt-6 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-amber-400 px-6 py-3.5 font-display text-sm font-bold tracking-widest text-black shadow-xl shadow-amber-400/30 transition hover:bg-amber-300 hover:shadow-amber-400/50 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60"
+                className="axc-shine relative mt-6 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-blue-500 px-6 py-3.5 font-display text-sm font-bold tracking-wide text-white shadow-xl shadow-blue-500/30 transition hover:bg-blue-400 hover:shadow-blue-500/50 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {busy ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

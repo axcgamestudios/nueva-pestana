@@ -23,11 +23,17 @@ import {
 } from "./accounts";
 import {
   LOBBY_ROOM,
-  PEER_DISCOVERY_TIMEOUT_MS,
   p2p,
   subscribeP2P,
   type P2pEvent,
 } from "./p2p";
+import {
+  fetchInbox,
+  fetchRegistry,
+  pushInboxItems,
+  replaceInbox,
+  type CloudInboxItem,
+} from "./cloud-db";
 
 export type View = "home" | "game" | "chat" | "auth";
 
@@ -75,7 +81,7 @@ export interface CallPeerState {
   video?: boolean;
 }
 
-const GROUP_COLORS = ["#f59e0b", "#10b981", "#06b6d4", "#8b5cf6", "#ec4899", "#f97316"];
+const GROUP_COLORS = ["#3b82f6", "#10b981", "#06b6d4", "#8b5cf6", "#ec4899", "#f97316"];
 const MSG_CAP = 200;
 
 interface AxState {
@@ -466,6 +472,117 @@ function friendAccept(
 }
 
 // ---------------------------------------------------------------------------
+// Bandeja de entrada en la nube (entrega aunque el otro NO esté conectado)
+// ---------------------------------------------------------------------------
+
+/** Intervalo de consulta de la bandeja de entrada en la nube. */
+const INBOX_POLL_MS = 20_000;
+
+let inboxTimer: ReturnType<typeof setInterval> | null = null;
+let inboxBusy = false;
+
+/** Encola un ítem en la bandeja de otro usuario (fire-and-forget). */
+function queueInbox(userId: string, item: Omit<CloudInboxItem, "id" | "at"> & { id?: string }): void {
+  if (!userId) return;
+  void pushInboxItems(userId, [
+    { id: item.id ?? crypto.randomUUID(), at: Date.now(), ...item },
+  ] as CloudInboxItem[]).catch(() => {
+    /* sin nube: el P2P puede haberlo entregado igualmente */
+  });
+}
+
+/** Convierte un perfil público de la nube en AxUser (bio garantizada). */
+function asAxUser(u: CloudPublicUserLike): AxUser {
+  return {
+    id: u.id,
+    username: u.username,
+    displayName: u.displayName,
+    avatarColor: u.avatarColor,
+    bio: u.bio ?? "",
+    createdAt: u.createdAt,
+  };
+}
+
+type CloudPublicUserLike = import("./cloud-db").CloudPublicUser;
+
+/** Consulta la bandeja propia e ingestiona todo lo pendiente. */
+async function pollCloudInbox(): Promise<void> {
+  const me = useAxStore.getState().me;
+  if (!me || inboxBusy) return;
+  inboxBusy = true;
+  try {
+    const items = await fetchInbox(me.id);
+    if (items.length === 0) return;
+    for (const it of items) {
+      // La sesión pudo cambiar mientras llegaban los datos
+      const st = useAxStore.getState();
+      if (!st.me || st.me.id !== me.id) return;
+      switch (it.kind) {
+        case "friend-request": {
+          if (it.from.id === me.id) break; // eco propio
+          handleP2pEvent({ type: "friend-request", user: asAxUser(it.from) }, () => useAxStore.getState(), (p) => useAxStore.setState(p));
+          break;
+        }
+        case "friend-accept": {
+          if (it.from.id === me.id) break;
+          handleP2pEvent({ type: "friend-accepted", user: asAxUser(it.from) }, () => useAxStore.getState(), (p) => useAxStore.setState(p));
+          break;
+        }
+        case "message": {
+          if (!it.message || it.message.senderId === me.id) break;
+          handleP2pEvent({ type: "message", message: { ...it.message, sender: asAxUser(it.from) } }, () => useAxStore.getState(), (p) => useAxStore.setState(p));
+          break;
+        }
+        case "group-invite": {
+          if (!it.group || it.from.id === me.id) break;
+          handleP2pEvent(
+            {
+              type: "group-invite",
+              group: {
+                ...it.group,
+                members: it.group.members.map((m) => asAxUser(m)),
+              } as AxConversation,
+              fromName: it.from.displayName,
+            },
+            () => useAxStore.getState(),
+            (p) => useAxStore.setState(p),
+          );
+          break;
+        }
+      }
+    }
+    // Todo lo anterior quedó consumido (o duplicado): vaciar la bandeja.
+    await replaceInbox(me.id, []);
+  } catch {
+    /* la nube no respondió: se reintenta en el próximo ciclo */
+  } finally {
+    inboxBusy = false;
+  }
+}
+
+function startInboxPolling(): void {
+  if (typeof window === "undefined") return;
+  if (inboxTimer) return;
+  inboxTimer = setInterval(() => void pollCloudInbox(), INBOX_POLL_MS);
+  window.addEventListener("visibilitychange", onVisChange);
+  void pollCloudInbox();
+}
+
+function stopInboxPolling(): void {
+  if (inboxTimer) {
+    clearInterval(inboxTimer);
+    inboxTimer = null;
+  }
+  if (typeof window !== "undefined") {
+    window.removeEventListener("visibilitychange", onVisChange);
+  }
+}
+
+function onVisChange(): void {
+  if (document.visibilityState === "visible") void pollCloudInbox();
+}
+
+// ---------------------------------------------------------------------------
 // Store
 // ---------------------------------------------------------------------------
 
@@ -555,6 +672,7 @@ export const useAxStore = create<AxState>((set, get) => ({
   logout: async () => {
     setSession(null);
     p2p.stop();
+    stopInboxPolling();
     currentUid = null;
     set({
       me: null,
@@ -613,6 +731,9 @@ export const useAxStore = create<AxState>((set, get) => ({
     void p2p.start(me).then(() => {
       if (get().me?.id === me.id) set({ socketConnected: true });
     });
+    // Bandeja en la nube: solicitudes y mensajes pendientes aunque nadie
+    // más esté conectado ahora mismo.
+    startInboxPolling();
   },
 
   loadFriends: async () => {
@@ -628,25 +749,36 @@ export const useAxStore = create<AxState>((set, get) => ({
     const s = get();
     if (!s.me) return { ok: false, error: "Inicia sesión primero." };
     const clean = username.trim().toLowerCase();
-
-    // El descubrimiento P2P (relés + WebRTC) puede tardar varios segundos
-    // aunque ambos estén conectados: esperamos un rato antes de declarar
-    // que el usuario está desconectado, en lugar de fallar al instante.
-    const findOnline = () => p2p.onlineUsers().find((u) => u.username === clean);
-    let user = findOnline();
-    const deadline = Date.now() + PEER_DISCOVERY_TIMEOUT_MS;
-    while (!user && Date.now() < deadline) {
-      await new Promise((r) => setTimeout(r, 1500));
-      if (get().me?.id !== s.me?.id) return { ok: false, error: "Sesión cerrada." };
-      user = findOnline();
+    if (!clean) return { ok: false, error: "Escribe un nombre de usuario." };
+    if (clean === s.me.username) return { ok: false, error: "No puedes añadirte a ti mismo." };
+    if (s.friends.some((f) => f.username === clean || f.id === clean)) {
+      return { ok: false, error: "Ya sois amigos." };
     }
+
+    // 1) ¿Conectado ahora mismo (P2P)? → entrega instantánea
+    let user = p2p.onlineUsers().find((u) => u.username === clean) ?? null;
+    // 2) Si no, buscarlo en el registro de la nube (funciona aunque NO
+    //    esté conectado: la solicitud le espera en su bandeja)
     if (!user) {
-      return {
-        ok: false,
-        error: `No se encontró a @${clean} con la web abierta. Comprueba que está conectado y vuelve a intentarlo en unos segundos (el chat es directo entre navegadores).`,
+      const reg = await fetchRegistry();
+      const acc = reg?.users[clean];
+      if (!acc) {
+        return {
+          ok: false,
+          error: `No existe ningún usuario «${clean}». Comprueba que está bien escrito.`,
+        };
+      }
+      user = {
+        id: acc.id,
+        username: acc.username,
+        displayName: acc.displayName,
+        avatarColor: acc.avatarColor,
+        bio: "",
+        createdAt: acc.createdAt,
       };
     }
-    // Releer estado: durante la espera pudo cambiar (nuevas solicitudes, etc.)
+
+    // Releer estado (la búsqueda pudo tardar)
     const fresh = get();
     if (!fresh.me) return { ok: false, error: "Sesión cerrada." };
     if (user.id === fresh.me.id) return { ok: false, error: "No puedes añadirte a ti mismo." };
@@ -655,8 +787,10 @@ export const useAxStore = create<AxState>((set, get) => ({
     }
     const inIdx = fresh.incoming.findIndex((r) => r.user.id === user.id);
     if (inIdx >= 0) {
+      // Aceptación mutua: ambos se enviaron solicitudes
       friendAccept(user, get, set);
       p2p.sendFriendAccepted(user);
+      queueInbox(user.id, { kind: "friend-accept", from: fresh.me });
       return { ok: true };
     }
     if (fresh.outgoing.some((r) => r.user.id === user.id)) {
@@ -665,17 +799,36 @@ export const useAxStore = create<AxState>((set, get) => ({
     const outgoing = [...fresh.outgoing, { friendshipId: `fs-${user.id}`, user }];
     persistFriends({ ...fresh, outgoing } as AxState);
     set({ outgoing });
+    // Entrega: P2P si está conectado + SIEMPRE copia a su bandeja en la
+    // nube (así le llega aunque no tenga la web abierta).
     p2p.sendFriendRequest(user);
+    const queued = await pushInboxItems(user.id, [
+      { id: crypto.randomUUID(), at: Date.now(), kind: "friend-request", from: s.me },
+    ]);
+    if (!queued && !p2p.isOnline(user.id)) {
+      // La nube no respondió y no está conectado: revertir para poder reintentar
+      const revert = get();
+      const outgoing2 = revert.outgoing.filter((r) => r.user.id !== user.id);
+      persistFriends({ ...revert, outgoing: outgoing2 } as AxState);
+      set({ outgoing: outgoing2 });
+      return {
+        ok: false,
+        error: "La conexión con la nube falló. Vuelve a intentarlo en unos segundos.",
+      };
+    }
     return { ok: true };
   },
 
   respondFriendRequest: async (friendshipId, action) => {
     const s = get();
+    if (!s.me) return;
     const req = s.incoming.find((r) => r.friendshipId === friendshipId);
     if (!req) return;
     if (action === "accept") {
       friendAccept(req.user, get, set);
       p2p.sendFriendAccepted(req.user);
+      // Copia a la nube: le llega aunque quien pidió no esté conectado
+      queueInbox(req.user.id, { kind: "friend-accept", from: s.me });
     } else {
       const incoming = s.incoming.filter((r) => r.friendshipId !== friendshipId);
       persistFriends({ ...s, incoming } as AxState);
@@ -747,6 +900,10 @@ export const useAxStore = create<AxState>((set, get) => ({
     p2p.joinRoom(conv.id);
     set({ conversations: convs });
     p2p.sendGroupInvite(conv, memberIds, s.me.displayName);
+    // Invitación offline: copia a la bandeja de cada invitado
+    for (const memberId of memberIds.slice(0, 8)) {
+      queueInbox(memberId, { kind: "group-invite", from: s.me, group: { ...conv, type: "group" } });
+    }
     await get().openConversation(conv.id);
     return conv.id;
   },
@@ -823,6 +980,17 @@ export const useAxStore = create<AxState>((set, get) => ({
       conversations: convs,
     });
     p2p.sendMessage(conversationId, m);
+    // Entrega offline: copia a la bandeja en la nube de cada miembro
+    // (conectado o no — el receptor deduplica por id de mensaje). Así un
+    // mensaje enviado a alguien sin la web abierta le espera hasta que
+    // entre. Limitado a 8 destinatarios por mensaje (grupos).
+    const conv = convs.find((c) => c.id === conversationId);
+    if (conv) {
+      const targets = conv.members.filter((mm) => mm.id !== s.me?.id).slice(0, 8);
+      for (const t of targets) {
+        queueInbox(t.id, { id: m.id, kind: "message", from: s.me, message: m });
+      }
+    }
   },
 
   setTyping: (typing) => {

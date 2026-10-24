@@ -32,12 +32,12 @@ export default function Avatar({
   return (
     <span className={`relative inline-flex shrink-0 ${className}`} style={{ width: size, height: size }}>
       <span
-        className="flex h-full w-full items-center justify-center rounded-full font-bold text-black select-none"
+        className="flex h-full w-full items-center justify-center rounded-full font-bold text-white select-none"
         style={
           {
             background: `linear-gradient(135deg, ${color}, ${color}cc)`,
             fontSize,
-            boxShadow: ring ? `0 0 0 2px #050505, 0 0 0 4px ${color}55` : undefined,
+            boxShadow: ring ? `0 0 0 2px #000, 0 0 0 4px ${color}55` : undefined,
           } as CSSProperties
         }
         aria-hidden

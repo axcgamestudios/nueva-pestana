@@ -37,7 +37,7 @@ export default function Hero({
           className="axc-spin-slow absolute inset-[-150%]"
           style={{
             background:
-              "conic-gradient(from 0deg, transparent 0deg, rgba(251,191,36,0.0) 40deg, rgba(251,191,36,0.65) 60deg, rgba(253,230,138,0.9) 70deg, rgba(251,191,36,0.65) 80deg, transparent 100deg, transparent 180deg, rgba(251,191,36,0.35) 220deg, transparent 250deg)",
+              "conic-gradient(from 0deg, transparent 0deg, rgba(96,165,250,0.0) 40deg, rgba(96,165,250,0.65) 60deg, rgba(253,230,138,0.9) 70deg, rgba(96,165,250,0.65) 80deg, transparent 100deg, transparent 180deg, rgba(96,165,250,0.35) 220deg, transparent 250deg)",
           }}
         />
         {/* Base tenue del borde (siempre visible) */}
@@ -46,7 +46,7 @@ export default function Hero({
           className="absolute inset-0 rounded-3xl border border-white/10"
         />
 
-        <div className="relative h-[500px] w-full overflow-hidden rounded-[calc(1.5rem-1.5px)] bg-[#050505] shadow-2xl shadow-black">
+        <div className="relative h-[500px] w-full overflow-hidden rounded-[calc(1.5rem-1.5px)] bg-[#000] shadow-2xl shadow-black">
           <Image
             src={asset(game.cover)}
             alt={`Portada de ${game.title}`}
@@ -56,8 +56,8 @@ export default function Hero({
             className="object-cover"
           />
           {/* Legibility overlays */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/75 to-[#050505]/10" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#000] via-[#000]/75 to-[#000]/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#000] via-transparent to-[#000]/40" />
 
           {/* Marca de agua del logo AXC GAMES (encima de los degradados) */}
           <div
@@ -71,7 +71,7 @@ export default function Hero({
                 width={380}
                 height={380}
                 sizes="380px"
-                className="h-auto w-full drop-shadow-[0_0_35px_rgba(251,191,36,0.35)]"
+                className="h-auto w-full drop-shadow-[0_0_35px_rgba(96,165,250,0.35)]"
               />
             </div>
           </div>
@@ -83,7 +83,7 @@ export default function Hero({
                 <motion.span
                   animate={{ scale: [1, 1.04, 1] }}
                   transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-amber-400 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-black shadow-lg shadow-amber-400/40"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-blue-500 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-white shadow-lg shadow-blue-500/40"
                 >
                   <Flame className="h-3.5 w-3.5" fill="currentColor" />
                   Destacado
@@ -93,7 +93,7 @@ export default function Hero({
                 </span>
               </div>
 
-              <h1 className="font-display text-4xl font-black leading-[1.05] tracking-wide sm:text-5xl lg:text-6xl">
+              <h1 className="font-display text-3xl font-extrabold leading-[1.08] sm:text-4xl lg:text-5xl">
                 <span className="axc-text-shimmer">{game.title.toUpperCase()}</span>
               </h1>
               <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/75 sm:text-base">
@@ -102,7 +102,7 @@ export default function Hero({
 
               <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/70">
                 <span className="flex items-center gap-1.5">
-                  <Star className="h-4 w-4 text-amber-400" fill="currentColor" />
+                  <Star className="h-4 w-4 text-blue-400" fill="currentColor" />
                   <b className="text-white">{game.rating}</b>
                 </span>
                 <span className="flex items-center gap-1.5">
@@ -110,7 +110,7 @@ export default function Hero({
                   {game.players} jugadores
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="axc-pulse h-2 w-2 rounded-full bg-amber-400" />
+                  <span className="axc-pulse h-2 w-2 rounded-full bg-blue-500" />
                   Juega al instante
                 </span>
               </div>
@@ -122,7 +122,7 @@ export default function Hero({
                   whileHover={{ scale: 1.04, y: -2 }}
                   whileTap={{ scale: 0.96 }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  className="axc-shine axc-glow relative inline-flex items-center gap-2.5 overflow-hidden rounded-full bg-amber-400 px-7 py-3.5 font-display text-sm font-bold tracking-widest text-black"
+                  className="axc-shine axc-glow relative inline-flex items-center gap-2.5 overflow-hidden rounded-full bg-blue-500 px-7 py-3.5 font-display text-sm font-bold text-white"
                 >
                   <Play className="h-4 w-4" fill="currentColor" />
                   JUGAR AHORA
@@ -153,12 +153,12 @@ export default function Hero({
                       ? `Quitar ${game.title} de favoritos`
                       : `Añadir ${game.title} a favoritos`
                   }
-                  className="rounded-full border border-white/15 bg-white/5 p-3.5 text-white/80 backdrop-blur transition hover:border-amber-400/60 hover:text-amber-400 hover:shadow-lg hover:shadow-amber-400/20"
+                  className="rounded-full border border-white/15 bg-white/5 p-3.5 text-white/80 backdrop-blur transition hover:border-blue-400/60 hover:text-blue-400 hover:shadow-lg hover:shadow-blue-500/20"
                 >
                   <Heart
                     className="h-5 w-5"
-                    fill={isFavorite ? "#fbbf24" : "none"}
-                    color={isFavorite ? "#fbbf24" : "currentColor"}
+                    fill={isFavorite ? "#60a5fa" : "none"}
+                    color={isFavorite ? "#60a5fa" : "currentColor"}
                   />
                 </motion.button>
               </div>

@@ -126,12 +126,12 @@ export default function CloudSyncBanner() {
         className="fixed inset-x-0 bottom-0 z-[70] px-3 pb-3 sm:px-4 sm:pb-4"
         role="alert"
       >
-        <div className="mx-auto flex max-w-2xl flex-wrap items-center gap-3 rounded-2xl border border-amber-400/30 bg-[#161006]/95 p-4 shadow-2xl shadow-black/60 backdrop-blur-xl">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/15 text-amber-400">
+        <div className="mx-auto flex max-w-2xl flex-wrap items-center gap-3 rounded-2xl border border-blue-400/30 bg-[#161006]/95 p-4 shadow-2xl shadow-black/60 backdrop-blur-xl">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-400/15 text-blue-400">
             <CloudUpload className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-amber-200">
+            <p className="text-sm font-bold text-blue-200">
               {me.displayName}, actualiza tu cuenta al nuevo sistema
             </p>
             <p className="mt-0.5 text-xs leading-relaxed text-white/60">
@@ -145,7 +145,7 @@ export default function CloudSyncBanner() {
               type="button"
               onClick={() => void migrate()}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-amber-400 px-4 py-2.5 text-xs font-bold tracking-wide text-black shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 active:scale-95 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-500 px-4 py-2.5 text-xs font-bold tracking-wide text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 active:scale-95 disabled:opacity-50"
             >
               {busy ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

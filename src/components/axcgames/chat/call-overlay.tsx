@@ -127,7 +127,7 @@ function VideoTile({
           </span>
           {connecting && (
             <span className="flex items-center gap-1.5 text-xs text-white/50">
-              <span className="axc-typing-dot h-1.5 w-1.5 rounded-full bg-amber-400" />
+              <span className="axc-typing-dot h-1.5 w-1.5 rounded-full bg-blue-500" />
               Conectando…
             </span>
           )}
@@ -358,9 +358,9 @@ export default function CallLayer() {
               </h3>
               <p className="mt-1 flex items-center justify-center gap-2 text-sm text-white/50">
                 {incomingCall.type === "video" ? (
-                  <Video className="h-4 w-4 text-amber-400" />
+                  <Video className="h-4 w-4 text-blue-400" />
                 ) : (
-                  <Phone className="h-4 w-4 text-amber-400" />
+                  <Phone className="h-4 w-4 text-blue-400" />
                 )}
                 {incomingCall.type === "video" ? "Videollamada entrante" : "Llamada entrante"}…
               </p>
@@ -403,12 +403,12 @@ export default function CallLayer() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[75] flex flex-col bg-[#050505]/97 backdrop-blur-xl"
+            className="fixed inset-0 z-[75] flex flex-col bg-[#000]/97 backdrop-blur-xl"
           >
             {/* Cabecera */}
             <div className="flex items-center justify-between px-5 py-4">
               <div className="flex items-center gap-3">
-                <Volume2 className="h-5 w-5 text-amber-400" />
+                <Volume2 className="h-5 w-5 text-blue-400" />
                 <div>
                   <p className="font-display text-sm font-bold tracking-wide text-white">
                     {(conv
@@ -430,7 +430,7 @@ export default function CallLayer() {
                 className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${
                   call.status === "active"
                     ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
-                    : "border-amber-400/40 bg-amber-400/10 text-amber-300"
+                    : "border-blue-400/40 bg-blue-400/10 text-blue-300"
                 }`}
               >
                 {call.type === "video" ? "Vídeo" : "Voz"} ·{" "}
@@ -455,7 +455,7 @@ export default function CallLayer() {
                   muted
                   mirrored
                   label="Tú"
-                  color={me?.avatarColor ?? "#fbbf24"}
+                  color={me?.avatarColor ?? "#60a5fa"}
                   audioOff={!micOn}
                   videoOff={!camOn}
                 />
@@ -469,7 +469,7 @@ export default function CallLayer() {
                       muted={false}
                       mirrored={false}
                       label={info?.displayName ?? "Participante"}
-                      color={info?.avatarColor ?? "#fbbf24"}
+                      color={info?.avatarColor ?? "#60a5fa"}
                       audioOff={peerState?.audio === false}
                       videoOff={peerState?.video === false}
                     />

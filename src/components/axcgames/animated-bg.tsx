@@ -3,9 +3,9 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Campo estelar premium (canvas):
- * - Partículas doradas/blancas con titileo (twinkle) y conexiones.
- * - Estrellas fugaces (meteoros) con estela de degradado.
+ * Campo de partículas premium (canvas) — tema azul:
+ * - Partículas azules/blancas con titileo (twinkle) y conexiones.
+ * - Estrellas fugaces (meteoros) con estela azul/cian.
  * Se pausa cuando la pestaña está oculta y respeta prefers-reduced-motion.
  */
 function Particles() {
@@ -24,7 +24,7 @@ function Particles() {
       vx: number;
       vy: number;
       r: number;
-      gold: boolean;
+      blue: boolean;
       /** fase de titileo */
       tw: number;
       twSpeed: number;
@@ -62,7 +62,7 @@ function Particles() {
         vx: (Math.random() - 0.5) * 0.22,
         vy: (Math.random() - 0.5) * 0.22,
         r: Math.random() * 1.6 + 0.5,
-        gold: Math.random() < 0.55,
+        blue: Math.random() < 0.55,
         tw: Math.random() * Math.PI * 2,
         twSpeed: 0.008 + Math.random() * 0.02,
       }));
@@ -111,8 +111,8 @@ function Particles() {
           const dy = a.y - b.y;
           const d2 = dx * dx + dy * dy;
           if (d2 < maxDist * maxDist) {
-            const alpha = (1 - Math.sqrt(d2) / maxDist) * 0.13;
-            ctx.strokeStyle = `rgba(251, 191, 36, ${alpha})`;
+            const alpha = (1 - Math.sqrt(d2) / maxDist) * 0.14;
+            ctx.strokeStyle = `rgba(96, 165, 250, ${alpha})`;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
@@ -125,8 +125,8 @@ function Particles() {
       // Estrellas con titileo (más brillo en el pico del ciclo)
       for (const p of parts) {
         const twinkle = 0.55 + 0.45 * Math.sin(p.tw);
-        ctx.fillStyle = p.gold
-          ? `rgba(251, 191, 36, ${0.5 * twinkle + 0.15})`
+        ctx.fillStyle = p.blue
+          ? `rgba(96, 165, 250, ${0.5 * twinkle + 0.15})`
           : `rgba(255, 255, 255, ${0.34 * twinkle + 0.1})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
@@ -143,9 +143,9 @@ function Particles() {
         const tailX = m.x - (m.vx / Math.hypot(m.vx, m.vy)) * m.len;
         const tailY = m.y - (m.vy / Math.hypot(m.vx, m.vy)) * m.len;
         const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
-        grad.addColorStop(0, `rgba(255, 236, 170, ${0.8 * fade})`);
-        grad.addColorStop(0.35, `rgba(251, 191, 36, ${0.35 * fade})`);
-        grad.addColorStop(1, "rgba(251, 191, 36, 0)");
+        grad.addColorStop(0, `rgba(219, 234, 254, ${0.85 * fade})`);
+        grad.addColorStop(0.35, `rgba(96, 165, 250, ${0.4 * fade})`);
+        grad.addColorStop(1, "rgba(59, 130, 246, 0)");
         ctx.strokeStyle = grad;
         ctx.lineWidth = 2;
         ctx.lineCap = "round";
@@ -154,7 +154,7 @@ function Particles() {
         ctx.lineTo(tailX, tailY);
         ctx.stroke();
         // Núcleo
-        ctx.fillStyle = `rgba(255, 246, 205, ${0.9 * fade})`;
+        ctx.fillStyle = `rgba(240, 249, 255, ${0.9 * fade})`;
         ctx.beginPath();
         ctx.arc(m.x, m.y, 1.6, 0, Math.PI * 2);
         ctx.fill();
@@ -190,36 +190,36 @@ function Particles() {
 }
 
 /**
- * Fondo animado premium: campo estelar con fugaces + auroras + rayo de luz
- * + grid + ruido + viñeta. Solo transform/opacity/canvas para rendimiento.
- * Respeta prefers-reduced-motion.
+ * Fondo animado premium: campo de partículas azul con fugaces + auroras
+ * + rayo de luz + grid + ruido + viñeta. Solo transform/opacity/canvas
+ * para rendimiento. Respeta prefers-reduced-motion.
  */
 export default function AnimatedBg({ dim = false }: { dim?: boolean }) {
   return (
-    <div aria-hidden className="fixed inset-0 -z-10 overflow-hidden bg-[#050505]">
-      {/* Campo estelar con estrellas fugaces */}
+    <div aria-hidden className="fixed inset-0 -z-10 overflow-hidden bg-black">
+      {/* Campo de partículas con estrellas fugaces */}
       <Particles />
 
-      {/* Blobs de aurora */}
+      {/* Blobs de aurora (familia azul) */}
       <div
         className="axc-aurora axc-aurora-a absolute -top-[20%] left-[-10%] h-[55vmax] w-[55vmax] rounded-full opacity-70 blur-[110px]"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(251,191,36,0.18), rgba(251,146,60,0.06) 45%, transparent 70%)",
+            "radial-gradient(circle at center, rgba(37,99,235,0.20), rgba(59,130,246,0.07) 45%, transparent 70%)",
         }}
       />
       <div
         className="axc-aurora axc-aurora-b absolute top-[30%] right-[-15%] h-[50vmax] w-[50vmax] rounded-full opacity-60 blur-[120px]"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(239,68,68,0.12), rgba(190,24,93,0.06) 45%, transparent 70%)",
+            "radial-gradient(circle at center, rgba(56,189,248,0.14), rgba(14,165,233,0.06) 45%, transparent 70%)",
         }}
       />
       <div
         className="axc-aurora axc-aurora-c absolute bottom-[-25%] left-[20%] h-[45vmax] w-[45vmax] rounded-full opacity-60 blur-[130px]"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(52,211,153,0.09), rgba(45,212,191,0.05) 45%, transparent 70%)",
+            "radial-gradient(circle at center, rgba(99,102,241,0.12), rgba(79,70,229,0.05) 45%, transparent 70%)",
         }}
       />
 
@@ -228,7 +228,7 @@ export default function AnimatedBg({ dim = false }: { dim?: boolean }) {
         className="axc-beam absolute -top-[20%] left-0 h-[140%] w-[24vw]"
         style={{
           background:
-            "linear-gradient(90deg, transparent, rgba(251,191,36,0.05) 45%, rgba(255,235,180,0.09) 50%, rgba(251,191,36,0.05) 55%, transparent)",
+            "linear-gradient(90deg, transparent, rgba(59,130,246,0.05) 45%, rgba(147,197,253,0.10) 50%, rgba(59,130,246,0.05) 55%, transparent)",
           filter: "blur(6px)",
         }}
       />

@@ -46,7 +46,7 @@ export default function FriendsPanel({
         </button>
         <h2 className="font-display text-base font-bold tracking-wide">AMIGOS</h2>
         {incoming.length > 0 && (
-          <span className="axc-badge-pop flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-extrabold text-black">
+          <span className="axc-badge-pop flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-500 px-1.5 text-[11px] font-extrabold text-white">
             {incoming.length}
           </span>
         )}
@@ -345,11 +345,14 @@ function AddFriendForm({ onAdded }: { onAdded: () => void }) {
     e.preventDefault();
     if (loading || !username.trim()) return;
     setLoading(true);
-    setMsg({ ok: true, text: `Buscando a @${username.trim()} en la red…` });
+    setMsg({ ok: true, text: `Enviando solicitud a @${username.trim()}…` });
     const res = await sendFriendRequest(username.trim());
     setLoading(false);
     if (res.ok) {
-      setMsg({ ok: true, text: `¡Solicitud enviada a «${username.trim()}»!` });
+      setMsg({
+        ok: true,
+        text: `¡Solicitud enviada a «${username.trim()}»! La verá aunque no esté conectado.`,
+      });
       toast({ description: `Solicitud enviada a @${username.trim()}` });
       setUsername("");
       onAdded();
@@ -374,7 +377,7 @@ function AddFriendForm({ onAdded }: { onAdded: () => void }) {
       <form onSubmit={submit} className="space-y-4">
         <div>
           <label htmlFor="add-friend-input" className="mb-2 block text-sm text-white/60">
-            Añade amigos con su <b className="text-amber-400">nombre de usuario</b>. ¡Ellos
+            Añade amigos con su <b className="text-blue-400">nombre de usuario</b>. ¡Ellos
             tendrán que aceptar tu solicitud!
           </label>
           <div className="relative">
@@ -385,7 +388,7 @@ function AddFriendForm({ onAdded }: { onAdded: () => void }) {
               onChange={(e) => setUsername(e.target.value.toLowerCase())}
               placeholder="escribe un usuario…"
               autoComplete="off"
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/25"
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-blue-400/60 focus:ring-2 focus:ring-blue-400/25"
             />
           </div>
         </div>
@@ -406,12 +409,12 @@ function AddFriendForm({ onAdded }: { onAdded: () => void }) {
         <button
           type="submit"
           disabled={loading || !username.trim()}
-          className="axc-shine relative w-full overflow-hidden rounded-xl bg-amber-400 px-6 py-3 font-display text-sm font-bold tracking-widest text-black shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 active:scale-[0.98] disabled:opacity-50"
+          className="axc-shine relative w-full overflow-hidden rounded-xl bg-blue-500 px-6 py-3 font-display text-sm font-bold tracking-wide text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 active:scale-[0.98] disabled:opacity-50"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
-              BUSCANDO EN LA RED…
+              ENVIANDO SOLICITUD…
             </span>
           ) : (
             "ENVIAR SOLICITUD"
@@ -419,9 +422,8 @@ function AddFriendForm({ onAdded }: { onAdded: () => void }) {
         </button>
         <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-white/30">
           <Info className="mt-0.5 h-3 w-3 shrink-0" />
-          El chat funciona directamente entre navegadores (P2P): los dos debéis
-          tener la web abierta a la vez. Si no aparece, esperad unos segundos y
-          volved a probar.
+          Las solicitudes y los mensajes se guardan en la nube: tu amigo los
+          recibirá en cuanto entre, aunque no esté conectado ahora mismo.
         </p>
       </form>
 
@@ -445,7 +447,7 @@ function AddFriendForm({ onAdded }: { onAdded: () => void }) {
                 <button
                   type="button"
                   onClick={() => quickAdd(u)}
-                  className="flex items-center gap-1.5 rounded-full bg-amber-400/15 px-3 py-1.5 text-xs font-bold text-amber-300 transition hover:bg-amber-400 hover:text-black active:scale-95"
+                  className="flex items-center gap-1.5 rounded-full bg-blue-400/15 px-3 py-1.5 text-xs font-bold text-blue-300 transition hover:bg-blue-500 hover:text-white active:scale-95"
                 >
                   <UserPlus className="h-3.5 w-3.5" />
                   Añadir
@@ -479,7 +481,7 @@ function IconBtn({
       className={`rounded-full p-2 transition active:scale-90 ${
         danger
           ? "text-white/40 hover:bg-red-500/15 hover:text-red-400"
-          : "bg-white/5 text-white/70 hover:bg-amber-400 hover:text-black"
+          : "bg-white/5 text-white/70 hover:bg-blue-500 hover:text-white"
       }`}
     >
       {children}

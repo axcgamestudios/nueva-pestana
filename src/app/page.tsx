@@ -247,7 +247,7 @@ export default function Home() {
   );
 
   return (
-    <div className="flex min-h-dvh flex-col bg-[#050505] text-white">
+    <div className="flex min-h-dvh flex-col bg-[#000] text-white">
       <AnimatedBg dim={view === "game"} />
 
       {/* Notificaciones del chat activas en TODAS las vistas (home, juego, chat) */}
@@ -321,10 +321,10 @@ export default function Home() {
                 {[...allGames, ...allGames].map((g, i) => (
                   <span
                     key={`${g.id}-mq-${i}`}
-                    className="flex items-center gap-12 whitespace-nowrap font-display text-xs font-bold uppercase tracking-[0.35em] text-white/40"
+                    className="flex items-center gap-12 whitespace-nowrap font-display text-xs font-bold uppercase tracking-[0.2em] text-white/40"
                   >
                     {g.title}
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400/60" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-400/60" />
                   </span>
                 ))}
               </div>
@@ -341,12 +341,12 @@ export default function Home() {
                     key={title}
                     whileHover={{ y: -5, scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 320, damping: 20 }}
-                    className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-sm transition-colors hover:border-amber-400/30 hover:bg-white/[0.06] hover:shadow-lg hover:shadow-amber-400/10"
+                    className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-sm transition-colors hover:border-blue-400/30 hover:bg-white/[0.06] hover:shadow-lg hover:shadow-blue-500/10"
                   >
                     <motion.span
                       whileHover={{ rotate: -8, scale: 1.12 }}
                       transition={{ type: "spring", stiffness: 320, damping: 14 }}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-amber-400 shadow-inner shadow-amber-400/10 transition-colors group-hover:bg-amber-400/20"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-400/10 text-blue-400 shadow-inner shadow-blue-500/10 transition-colors group-hover:bg-blue-400/20"
                     >
                       <Icon className="h-5 w-5" />
                     </motion.span>
@@ -371,7 +371,7 @@ export default function Home() {
                 >
                   <span
                     aria-hidden
-                    className="h-5 w-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 shadow-md shadow-amber-400/40"
+                    className="h-5 w-1 rounded-full bg-gradient-to-b from-blue-300 to-blue-500 shadow-md shadow-blue-500/40"
                   />
                   CONTINÚA JUGANDO
                 </h2>
@@ -403,7 +403,7 @@ export default function Home() {
                 >
                   <span
                     aria-hidden
-                    className="h-5 w-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 shadow-md shadow-amber-400/40"
+                    className="h-5 w-1 rounded-full bg-gradient-to-b from-blue-300 to-blue-500 shadow-md shadow-blue-500/40"
                   />
                   TUS FAVORITOS
                 </h2>
@@ -436,7 +436,7 @@ export default function Home() {
                   >
                     <span
                       aria-hidden
-                      className="h-6 w-1 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 shadow-md shadow-amber-400/40"
+                      className="h-6 w-1 rounded-full bg-gradient-to-b from-blue-300 to-blue-500 shadow-md shadow-blue-500/40"
                     />
                     TODOS LOS JUEGOS
                   </h2>
@@ -450,7 +450,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => useAxStore.getState().openAuth()}
-                    className="rounded-full border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-xs font-bold text-amber-300 transition hover:bg-amber-400/20"
+                    className="rounded-full border border-blue-400/40 bg-blue-400/10 px-4 py-2 text-xs font-bold text-blue-300 transition hover:bg-blue-400/20"
                   >
                     Crea tu cuenta para jugar y chatear
                   </button>
@@ -469,7 +469,7 @@ export default function Home() {
                     whileTap={{ scale: 0.94 }}
                     className={`relative rounded-full border px-4 py-2 text-sm font-semibold ${
                       category === cat
-                        ? "border-transparent text-black"
+                        ? "border-transparent text-white"
                         : "border-white/10 bg-white/5 text-white/65 hover:border-white/25 hover:text-white"
                     }`}
                   >
@@ -477,7 +477,7 @@ export default function Home() {
                       <motion.span
                         layoutId="cat-pill"
                         transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                        className="absolute inset-0 rounded-full bg-amber-400 shadow-lg shadow-amber-400/30"
+                        className="absolute inset-0 rounded-full bg-blue-500 shadow-lg shadow-blue-500/30"
                       />
                     )}
                     <span className="relative">{cat}</span>
@@ -518,7 +518,7 @@ export default function Home() {
                       setQuery("");
                       setCategory("Todos");
                     }}
-                    className="mt-5 rounded-full bg-amber-400 px-5 py-2.5 text-sm font-bold text-black transition hover:bg-amber-300 active:scale-95"
+                    className="mt-5 rounded-full bg-blue-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-400 active:scale-95"
                   >
                     Ver todos los juegos
                   </button>

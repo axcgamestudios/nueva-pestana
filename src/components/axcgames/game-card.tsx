@@ -69,7 +69,7 @@ export default function GameCard({
           rotateY,
           transformStyle: "preserve-3d",
         }}
-        className="relative block w-full cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 text-left outline-none transition-[border-color,box-shadow] duration-300 hover:border-white/25 hover:shadow-2xl hover:shadow-black focus-visible:ring-2 focus-visible:ring-amber-400/70"
+        className="relative block w-full cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 text-left outline-none transition-[border-color,box-shadow] duration-300 hover:border-white/25 hover:shadow-2xl hover:shadow-black focus-visible:ring-2 focus-visible:ring-blue-400/70"
       >
         <div className="relative aspect-[16/10] w-full">
           <Image
@@ -94,7 +94,7 @@ export default function GameCard({
 
           {/* category badge */}
           <span
-            className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-black shadow-lg transition-transform duration-300 group-hover:scale-105"
+            className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-lg transition-transform duration-300 group-hover:scale-105"
             style={{ backgroundColor: game.accent }}
           >
             {game.categories[0]}
@@ -114,12 +114,12 @@ export default function GameCard({
             }}
             whileHover={{ scale: 1.15 }}
             whileTap={{ scale: 0.85 }}
-            className="absolute right-3 top-3 rounded-full bg-black/55 p-2 text-white/80 backdrop-blur transition hover:bg-black/75 hover:text-amber-400"
+            className="absolute right-3 top-3 rounded-full bg-black/55 p-2 text-white/80 backdrop-blur transition hover:bg-black/75 hover:text-blue-400"
           >
             <Heart
               className="h-4 w-4"
-              fill={isFavorite ? "#fbbf24" : "none"}
-              color={isFavorite ? "#fbbf24" : "currentColor"}
+              fill={isFavorite ? "#60a5fa" : "none"}
+              color={isFavorite ? "#60a5fa" : "currentColor"}
             />
           </motion.button>
 
@@ -140,7 +140,7 @@ export default function GameCard({
             </h3>
             <div className="mt-1 flex items-center gap-3 text-[11px] text-white/60">
               <span className="flex items-center gap-1">
-                <Star className="h-3.5 w-3.5 text-amber-400" fill="currentColor" />
+                <Star className="h-3.5 w-3.5 text-blue-400" fill="currentColor" />
                 {game.rating.toFixed(1)}
               </span>
               <span className="flex items-center gap-1">

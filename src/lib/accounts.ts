@@ -41,7 +41,7 @@ export type Account = {
 export const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 
 export const AVATAR_COLORS = [
-  "#f59e0b",
+  "#3b82f6",
   "#ef4444",
   "#10b981",
   "#06b6d4",

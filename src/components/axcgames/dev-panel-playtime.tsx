@@ -104,7 +104,7 @@ function DayBars({ days }: { days: Record<string, number> }) {
       {bars.map((b) => (
         <div key={b.key} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
           <div
-            className={`w-full rounded-[3px] ${b.sec > 0 ? "bg-amber-400/80" : "bg-white/8"}`}
+            className={`w-full rounded-[3px] ${b.sec > 0 ? "bg-blue-400/80" : "bg-white/8"}`}
             style={{ height: `${Math.max(4, (b.sec / max) * 82)}%` }}
             title={`${prettyDate(b.key)}: ${formatDuration(b.sec)}`}
           />
@@ -131,7 +131,7 @@ function TopGames({
       {top.map(([id, sec]) => (
         <li key={id} className="flex items-center justify-between gap-3 text-xs">
           <span className="truncate text-white/70">{titles[id] ?? id}</span>
-          <b className="shrink-0 text-amber-300">{formatDuration(sec)}</b>
+          <b className="shrink-0 text-blue-300">{formatDuration(sec)}</b>
         </li>
       ))}
     </ul>
@@ -143,7 +143,7 @@ function UserChip({ row, size = "md" }: { row: StatRow; size?: "md" | "sm" }) {
   return (
     <span className="relative inline-flex shrink-0">
       <span
-        className={`inline-flex ${s} items-center justify-center rounded-full font-bold text-black/80`}
+        className={`inline-flex ${s} items-center justify-center rounded-full font-bold text-white/80`}
         style={{ backgroundColor: row.avatarColor }}
         aria-hidden
       >
@@ -345,7 +345,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
     return (
       <div className="space-y-4">
         {/* Estado de la fase */}
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-xs text-amber-200/90">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-blue-400/20 bg-blue-400/5 px-4 py-3 text-xs text-blue-200/90">
           <CalendarClock className="h-4 w-4 shrink-0" />
           <span>
             {enforcementActive(config) ? (
@@ -398,7 +398,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                           <span className="min-w-0">
                             <span className="block truncate font-bold text-white">
                               {r.displayName}
-                              {r.isMe && <span className="ml-1.5 text-[10px] font-bold text-amber-400/80">(tú)</span>}
+                              {r.isMe && <span className="ml-1.5 text-[10px] font-bold text-blue-400/80">(tú)</span>}
                             </span>
                             <span className="block truncate text-[11px] text-white/40">
                               @{r.username}
@@ -474,7 +474,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
   return (
     <div className="space-y-4">
       {busy && (
-        <div className="flex items-center gap-2.5 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm text-amber-300">
+        <div className="flex items-center gap-2.5 rounded-xl border border-blue-400/20 bg-blue-400/5 px-4 py-3 text-sm text-blue-300">
           <Loader2 className="h-4 w-4 animate-spin" />
           {busy}
         </div>
@@ -502,7 +502,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
             className={`flex flex-wrap items-center gap-2 rounded-xl border px-4 py-3 text-xs ${
               enforcing
                 ? "border-orange-400/25 bg-orange-400/5 text-orange-200/90"
-                : "border-amber-400/20 bg-amber-400/5 text-amber-200/90"
+                : "border-blue-400/20 bg-blue-400/5 text-blue-200/90"
             }`}
           >
             <CalendarClock className="h-4 w-4 shrink-0" />
@@ -530,7 +530,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
               className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition active:scale-95 ${
                 enforcing
                   ? "border border-white/15 bg-white/5 text-white/55 hover:border-red-500/50 hover:text-red-400"
-                  : "bg-amber-400 text-black shadow-lg shadow-amber-400/20 hover:bg-amber-300"
+                  : "bg-blue-500 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-400"
               }`}
             >
               <ShieldCheck className="h-3.5 w-3.5" />
@@ -560,7 +560,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                     setDraft({ ...draft, defaultWeeklyLimitMinutes: v === "" ? null : Number(v) });
                     setDirty(true);
                   }}
-                  className="w-40 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
+                  className="w-40 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-blue-400/60 focus:outline-none"
                 />
               </div>
               <div>
@@ -583,7 +583,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                     setDraft({ ...draft, idleTimeoutMinutes: v === "" ? null : Number(v) });
                     setDirty(true);
                   }}
-                  className="w-40 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
+                  className="w-40 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-blue-400/60 focus:outline-none"
                 />
                 <p className="mt-1.5 text-[11px] leading-relaxed text-white/35">
                   Sin teclado/ratón/táctil ese tiempo, el contador se pausa.
@@ -603,7 +603,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                 type="button"
                 onClick={() => void save()}
                 disabled={!dirty || Boolean(busy)}
-                className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-2.5 font-display text-xs font-bold tracking-widest text-black shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 active:scale-95 disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-2.5 font-display text-xs font-bold tracking-wide text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 active:scale-95 disabled:opacity-40"
               >
                 <Save className="h-4 w-4" />
                 GUARDAR EN EL REPO
@@ -675,7 +675,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                             const v = e.target.value.trim();
                             updateUser(id, { weeklyLimitMinutes: v === "" ? null : Number(v) }, username);
                           }}
-                          className="w-32 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-amber-400/60 focus:outline-none"
+                          className="w-32 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-blue-400/60 focus:outline-none"
                         />
                       </div>
 
@@ -685,7 +685,7 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                           type="checkbox"
                           checked={uc.exempt === true}
                           onChange={(e) => updateUser(id, { exempt: e.target.checked }, username)}
-                          className="h-4 w-4 accent-amber-400"
+                          className="h-4 w-4 accent-blue-400"
                         />
                         <ShieldCheck className="h-3.5 w-3.5" />
                         Exento (sin bloqueo)
@@ -696,10 +696,10 @@ export default function DevPanelPlaytime({ mode }: { mode: Mode }) {
                     <div className="mt-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2.5">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="flex items-center gap-1.5 text-xs text-white/55">
-                          <Gift className="h-3.5 w-3.5 text-amber-400/80" />
+                          <Gift className="h-3.5 w-3.5 text-blue-400/80" />
                           Horas extra de esta semana
                           {enforcing ? "" : " (se aplicarán al activarse los límites)"}:
-                          <b className="text-amber-300">+{formatMinutes(bonus)}</b>
+                          <b className="text-blue-300">+{formatMinutes(bonus)}</b>
                         </p>
                         <div className="flex flex-wrap gap-1.5">
                           {[

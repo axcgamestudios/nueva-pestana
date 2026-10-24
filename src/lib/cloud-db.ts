@@ -153,7 +153,7 @@ function normalizeRegistry(raw: unknown): CloudRegistry | null {
         id: a.id,
         username: a.username,
         displayName: typeof a.displayName === "string" ? a.displayName : a.username,
-        avatarColor: typeof a.avatarColor === "string" ? a.avatarColor : "#f59e0b",
+        avatarColor: typeof a.avatarColor === "string" ? a.avatarColor : "#3b82f6",
         salt: a.salt,
         hash: a.hash,
         createdAt: typeof a.createdAt === "string" ? a.createdAt : new Date().toISOString(),
@@ -301,6 +301,161 @@ export async function fetchCloudStats(userId: string): Promise<PlaytimeData | nu
   const raw = await readDoc<PlaytimeData | null>(statsDocKey(userId));
   if (!raw || typeof raw !== "object" || !raw.days) return null;
   return raw;
+}
+
+/* ------------------------------------------------------------------ */
+/* Bandeja de entrada (entrega offline de amistad y mensajes)           */
+/* ------------------------------------------------------------------ */
+
+/** Perfil público de un usuario tal como viaja por la bandeja. */
+export interface CloudPublicUser {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarColor: string;
+  createdAt: string;
+  bio?: string;
+}
+
+/** Mensaje tal como viaja en la bandeja (misma forma que AxMessage). */
+export interface CloudInboxMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  type: string;
+  createdAt: string;
+  sender: CloudPublicUser;
+}
+
+/** Grupo tal como viaja en una invitación de la bandeja. */
+export interface CloudInboxGroup {
+  id: string;
+  type: "group";
+  name: string | null;
+  avatarColor: string;
+  createdBy: string | null;
+  updatedAt: string;
+  members: CloudPublicUser[];
+  lastMessage: unknown;
+  unreadCount: number;
+  lastReadAt: string;
+}
+
+/**
+ * Ítem pendiente de entregar a un usuario que quizá no está conectado.
+ * Se ingestiona en cuanto el destinatario abre la web (poll cada 20 s)
+ * y se elimina del documento una vez consumido.
+ */
+export interface CloudInboxItem {
+  id: string;
+  /** epoch ms de creación. */
+  at: number;
+  kind: "friend-request" | "friend-accept" | "message" | "group-invite";
+  /** quien lo envía. */
+  from: CloudPublicUser;
+  /** solo kind=message. */
+  message?: CloudInboxMessage;
+  /** solo kind=group-invite. */
+  group?: CloudInboxGroup;
+}
+
+interface InboxDoc {
+  v: number;
+  items: CloudInboxItem[];
+}
+
+/** Antigüedad máxima de un ítem (14 días). */
+const INBOX_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+/** Máximo de ítems por bandeja (se descartan los más viejos). */
+const INBOX_CAP = 40;
+
+/** Clave del documento de bandeja de un usuario. */
+export function inboxDocKey(userId: string): string {
+  return `${DB_PREFIX}-inbox-${userId}`;
+}
+
+function normalizeItem(raw: unknown): CloudInboxItem | null {
+  if (!raw || typeof raw !== "object") return null;
+  const it = raw as Record<string, unknown>;
+  const from = it.from as Record<string, unknown> | undefined;
+  if (
+    typeof it.id !== "string" ||
+    typeof it.at !== "number" ||
+    typeof it.kind !== "string" ||
+    !from ||
+    typeof from.id !== "string" ||
+    typeof from.username !== "string" ||
+    typeof from.displayName !== "string" ||
+    typeof from.avatarColor !== "string"
+  ) {
+    return null;
+  }
+  const item: CloudInboxItem = {
+    id: it.id,
+    at: it.at,
+    kind: it.kind as CloudInboxItem["kind"],
+    from: {
+      id: from.id,
+      username: from.username,
+      displayName: from.displayName,
+      avatarColor: from.avatarColor,
+      createdAt: typeof from.createdAt === "string" ? from.createdAt : new Date().toISOString(),
+      bio: typeof from.bio === "string" ? from.bio : "",
+    },
+  };
+  if (it.message && typeof it.message === "object") item.message = it.message as CloudInboxMessage;
+  if (it.group && typeof it.group === "object") item.group = it.group as CloudInboxGroup;
+  return item;
+}
+
+function normalizeInbox(raw: unknown): InboxDoc {
+  const items: CloudInboxItem[] = [];
+  if (raw && typeof raw === "object" && Array.isArray((raw as InboxDoc).items)) {
+    for (const x of (raw as InboxDoc).items) {
+      const it = normalizeItem(x);
+      if (it) items.push(it);
+    }
+  }
+  return { v: 1, items };
+}
+
+/** Descarga la bandeja pendiente de un usuario ([] si está vacía o falla). */
+export async function fetchInbox(userId: string): Promise<CloudInboxItem[]> {
+  const raw = await readDoc<unknown>(inboxDocKey(userId));
+  if (!raw) return [];
+  return normalizeInbox(raw).items.filter((it) => Date.now() - it.at < INBOX_TTL_MS);
+}
+
+/**
+ * Añade ítems a la bandeja de un usuario (leer → fusionar → escribir →
+ * verificar, con reintentos ante carreras de otros navegadores).
+ */
+export async function pushInboxItems(
+  userId: string,
+  newItems: CloudInboxItem[]
+): Promise<boolean> {
+  if (!userId || newItems.length === 0) return false;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const doc = normalizeInbox(await readDoc<unknown>(inboxDocKey(userId)));
+    const cutoff = Date.now() - INBOX_TTL_MS;
+    const fresh = newItems.filter((n) => !doc.items.some((x) => x.id === n.id));
+    doc.items = [...doc.items, ...fresh]
+      .filter((it) => it.at > cutoff)
+      .sort((a, b) => a.at - b.at)
+      .slice(-INBOX_CAP);
+    const written = await writeDoc(inboxDocKey(userId), doc);
+    if (!written) continue;
+    const after = normalizeInbox(await readDoc<unknown>(inboxDocKey(userId)));
+    if (newItems.every((n) => after.items.some((x) => x.id === n.id))) return true;
+  }
+  return false;
+}
+
+/** Reemplaza el contenido de la bandeja (p. ej. vaciarla tras ingestar). */
+export async function replaceInbox(userId: string, items: CloudInboxItem[]): Promise<boolean> {
+  const doc: InboxDoc = { v: 1, items };
+  return writeDoc(inboxDocKey(userId), doc);
 }
 
 /* ------------------------------------------------------------------ */

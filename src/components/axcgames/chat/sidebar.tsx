@@ -32,7 +32,7 @@ export function convDisplayName(conv: AxConversation, meId: string): string {
 export function convDisplayColor(conv: AxConversation, meId: string): string {
   if (conv.type === "group") return conv.avatarColor;
   const other = conv.members.find((m) => m.id !== meId);
-  return other?.avatarColor ?? "#fbbf24";
+  return other?.avatarColor ?? "#60a5fa";
 }
 
 export default function Sidebar({
@@ -103,10 +103,10 @@ export default function Sidebar({
           onClick={() => onNavigate?.("friends")}
           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/70 transition hover:bg-white/5 hover:text-white"
         >
-          <Users className="h-4.5 w-4.5 text-amber-400/80" />
+          <Users className="h-4.5 w-4.5 text-blue-400/80" />
           Amigos
           {incoming.length > 0 && (
-            <span className="axc-badge-pop ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-extrabold text-black">
+            <span className="axc-badge-pop ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-500 px-1.5 text-[11px] font-extrabold text-white">
               {incoming.length}
             </span>
           )}
@@ -124,7 +124,7 @@ export default function Sidebar({
             onClick={() => setGroupDialogOpen(true)}
             title="Crear grupo"
             aria-label="Crear grupo"
-            className="rounded-full p-1.5 text-white/40 transition hover:bg-white/10 hover:text-amber-400"
+            className="rounded-full p-1.5 text-white/40 transition hover:bg-white/10 hover:text-blue-400"
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -137,7 +137,7 @@ export default function Sidebar({
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar chat…"
             aria-label="Buscar conversación"
-            className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-xs text-white placeholder:text-white/30 outline-none transition focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/25"
+            className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-xs text-white placeholder:text-white/30 outline-none transition focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/25"
           />
         </div>
 
@@ -162,13 +162,13 @@ export default function Sidebar({
                 onClick={() => handleOpenConv(conv.id)}
                 className={`group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition ${
                   isActive
-                    ? "bg-amber-400/15 ring-1 ring-amber-400/40"
+                    ? "bg-blue-400/15 ring-1 ring-blue-400/40"
                     : "hover:bg-white/5"
                 }`}
               >
                 {conv.type === "group" ? (
                   <span
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-black"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white"
                     style={{ background: color }}
                   >
                     <Hash className="h-4 w-4" strokeWidth={2.6} />
@@ -200,7 +200,7 @@ export default function Sidebar({
                   </span>
                 </span>
                 {conv.unreadCount > 0 && (
-                  <span className="axc-badge-pop flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-extrabold text-black">
+                  <span className="axc-badge-pop flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-500 px-1.5 text-[11px] font-extrabold text-white">
                     {conv.unreadCount}
                   </span>
                 )}
@@ -268,7 +268,7 @@ function CreateGroupDialog({
               onChange={(e) => setName(e.target.value)}
               placeholder="ej: Squad de carreras"
               maxLength={40}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/25"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-blue-400/60 focus:ring-2 focus:ring-blue-400/25"
             />
           </div>
 
@@ -290,7 +290,7 @@ function CreateGroupDialog({
                     type="button"
                     onClick={() => toggle(f.id)}
                     className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition ${
-                      isSel ? "bg-amber-400/15" : "hover:bg-white/5"
+                      isSel ? "bg-blue-400/15" : "hover:bg-white/5"
                     }`}
                   >
                     <Avatar displayName={f.displayName} color={f.avatarColor} size={32} />
@@ -303,7 +303,7 @@ function CreateGroupDialog({
                     <span
                       className={`flex h-5 w-5 items-center justify-center rounded-md border transition ${
                         isSel
-                          ? "border-amber-400 bg-amber-400 text-black"
+                          ? "border-blue-400 bg-blue-500 text-white"
                           : "border-white/20 text-transparent"
                       }`}
                     >
@@ -338,7 +338,7 @@ function CreateGroupDialog({
                 setLoading(false);
               }
             }}
-            className="bg-amber-400 font-bold text-black hover:bg-amber-300"
+            className="bg-blue-500 font-bold text-white hover:bg-blue-400"
           >
             {loading ? "Creando…" : "Crear grupo"}
           </Button>

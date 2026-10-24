@@ -81,7 +81,7 @@ export default function ChatWindow({ onBack }: { onBack: () => void }) {
 
   const meId = me?.id ?? "";
   const name = conv ? convDisplayName(conv, meId) : "";
-  const color = conv ? convDisplayColor(conv, meId) : "#fbbf24";
+  const color = conv ? convDisplayColor(conv, meId) : "#60a5fa";
   const isOnline =
     conv?.type === "dm" && conv.members.some((m) => m.id !== meId && onlineIds.has(m.id));
 
@@ -136,7 +136,7 @@ export default function ChatWindow({ onBack }: { onBack: () => void }) {
         </button>
         {conv.type === "group" ? (
           <span
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-black"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white"
             style={{ background: color }}
           >
             <Hash className="h-5 w-5" strokeWidth={2.6} />
@@ -187,7 +187,7 @@ export default function ChatWindow({ onBack }: { onBack: () => void }) {
             onClick={() => startCall(conv.id, "audio")}
             title="Iniciar llamada de voz"
             aria-label="Iniciar llamada de voz"
-            className="rounded-full p-2.5 text-white/60 transition hover:bg-amber-400 hover:text-black active:scale-90"
+            className="rounded-full p-2.5 text-white/60 transition hover:bg-blue-500 hover:text-white active:scale-90"
           >
             <Phone className="h-4.5 w-4.5" />
           </button>
@@ -196,7 +196,7 @@ export default function ChatWindow({ onBack }: { onBack: () => void }) {
             onClick={() => startCall(conv.id, "video")}
             title="Iniciar videollamada"
             aria-label="Iniciar videollamada"
-            className="rounded-full p-2.5 text-white/60 transition hover:bg-amber-400 hover:text-black active:scale-90"
+            className="rounded-full p-2.5 text-white/60 transition hover:bg-blue-500 hover:text-white active:scale-90"
           >
             <Video className="h-4.5 w-4.5" />
           </button>
@@ -286,7 +286,7 @@ export default function ChatWindow({ onBack }: { onBack: () => void }) {
               {m.type === "call" ? (
                 <div className="my-2 flex justify-center">
                   <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs text-white/50">
-                    <PhoneCall className="h-3.5 w-3.5 text-amber-400/80" />
+                    <PhoneCall className="h-3.5 w-3.5 text-blue-400/80" />
                     {formatCallContent(m.content)}
                   </span>
                 </div>
@@ -310,7 +310,7 @@ export default function ChatWindow({ onBack }: { onBack: () => void }) {
                       <p className="mb-1 flex items-center gap-2 text-[11px] leading-none">
                         <span
                           className="font-bold"
-                          style={{ color: isMine ? "#fbbf24" : m.sender.avatarColor }}
+                          style={{ color: isMine ? "#60a5fa" : m.sender.avatarColor }}
                         >
                           {isMine ? "Tú" : m.sender.displayName}
                         </span>
@@ -320,7 +320,7 @@ export default function ChatWindow({ onBack }: { onBack: () => void }) {
                     <div
                       className={`inline-block whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
                         isMine
-                          ? "bg-amber-400 text-black rounded-br-md"
+                          ? "bg-blue-500 text-white rounded-br-md"
                           : "bg-white/[0.07] text-white/90 rounded-bl-md"
                       } ${grouped ? (isMine ? "rounded-tr-md" : "rounded-tl-md") : ""}`}
                     >
@@ -346,9 +346,9 @@ export default function ChatWindow({ onBack }: { onBack: () => void }) {
               className="flex items-center gap-1.5 text-xs text-white/50"
             >
               <span className="flex gap-1">
-                <span className="axc-typing-dot h-1.5 w-1.5 rounded-full bg-amber-400" />
-                <span className="axc-typing-dot h-1.5 w-1.5 rounded-full bg-amber-400" />
-                <span className="axc-typing-dot h-1.5 w-1.5 rounded-full bg-amber-400" />
+                <span className="axc-typing-dot h-1.5 w-1.5 rounded-full bg-blue-500" />
+                <span className="axc-typing-dot h-1.5 w-1.5 rounded-full bg-blue-500" />
+                <span className="axc-typing-dot h-1.5 w-1.5 rounded-full bg-blue-500" />
               </span>
               {typingUsers.map((t) => t.displayName).join(", ")}{" "}
               {typingUsers.length === 1 ? "está" : "están"} escribiendo…
@@ -359,7 +359,7 @@ export default function ChatWindow({ onBack }: { onBack: () => void }) {
 
       {/* Input */}
       <div className="px-3 pb-4 sm:px-5 sm:pb-5">
-        <div className="flex items-end gap-2 rounded-2xl border border-white/10 bg-white/[0.06] p-2 transition focus-within:border-amber-400/50 focus-within:ring-2 focus-within:ring-amber-400/20">
+        <div className="flex items-end gap-2 rounded-2xl border border-white/10 bg-white/[0.06] p-2 transition focus-within:border-blue-400/50 focus-within:ring-2 focus-within:ring-blue-400/20">
           <textarea
             value={input}
             onChange={(e) => handleInputChange(e.target.value)}
@@ -379,7 +379,7 @@ export default function ChatWindow({ onBack }: { onBack: () => void }) {
             onClick={handleSend}
             disabled={!input.trim()}
             aria-label="Enviar mensaje"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-black transition hover:bg-amber-300 active:scale-90 disabled:opacity-40"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500 text-white transition hover:bg-blue-400 active:scale-90 disabled:opacity-40"
           >
             <Send className="h-4.5 w-4.5" />
           </button>

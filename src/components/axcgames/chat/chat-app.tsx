@@ -109,7 +109,7 @@ function EmptyState({ onGoHome }: { onGoHome: () => void }) {
       <motion.span
         animate={{ y: [0, -8, 0] }}
         transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-        className="flex h-20 w-20 items-center justify-center rounded-3xl bg-amber-400/10 text-amber-400 ring-1 ring-amber-400/25"
+        className="flex h-20 w-20 items-center justify-center rounded-3xl bg-blue-400/10 text-blue-400 ring-1 ring-blue-400/25"
       >
         <MessageSquare className="h-9 w-9" />
       </motion.span>
@@ -124,10 +124,10 @@ function EmptyState({ onGoHome }: { onGoHome: () => void }) {
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2">
         <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white/55">
-          <Users className="h-3.5 w-3.5 text-amber-400/80" /> Amigos
+          <Users className="h-3.5 w-3.5 text-blue-400/80" /> Amigos
         </span>
         <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white/55">
-          <Sparkles className="h-3.5 w-3.5 text-amber-400/80" /> Grupos
+          <Sparkles className="h-3.5 w-3.5 text-blue-400/80" /> Grupos
         </span>
         <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white/55">
           📞 Llamadas
@@ -136,7 +136,7 @@ function EmptyState({ onGoHome }: { onGoHome: () => void }) {
       <button
         type="button"
         onClick={onGoHome}
-        className="mt-2 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white/70 transition hover:border-amber-400/40 hover:text-amber-300"
+        className="mt-2 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white/70 transition hover:border-blue-400/40 hover:text-blue-300"
       >
         <Gamepad2 className="h-4 w-4" />
         Volver a los juegos
