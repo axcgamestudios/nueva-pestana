@@ -256,7 +256,9 @@ export default function Home() {
   );
 
   return (
-    <div className="flex min-h-dvh flex-col bg-[#000] text-white">
+    // bg transparente: el fondo animado (-z-10) aporta el negro base.
+    // Un bg opaco aquí pintaría encima y escondería los puntos.
+    <div className="flex min-h-dvh flex-col text-white">
       <AnimatedBg dim={view === "game"} />
 
       {/* Motion graphics de entrada (una vez por sesión) */}

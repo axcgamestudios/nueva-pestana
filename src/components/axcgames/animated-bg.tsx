@@ -56,7 +56,7 @@ function DotField() {
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      spacing = w < 640 ? 28 : 32;
+      spacing = w < 640 ? 26 : 30;
       cols = Math.ceil(w / spacing) + 2;
       rows = Math.ceil(h / spacing) + 2;
       phase = new Float32Array(cols * rows);
@@ -121,21 +121,21 @@ function DotField() {
           if (md2 < HR2) glow = (1 - Math.sqrt(md2) / HALO_R) * 0.85;
           const depth = Math.min(1, d + glow);
 
-          if (depth < 0.1) continue; // puntos "lejanos" casi invisibles → huecos orgánicos
-
           // Macro-onda de brillo
           const macro =
             0.5 + 0.5 * Math.sin((x * 0.0011 + y * 0.0017) + macroA);
 
-          const r = 0.55 + depth * 1.05; // Ø ≈ 1.1–3.2 px → puntitos diminutos
+          const r = 0.8 + depth * 1.3; // Ø ≈ 1.6–4.2 px → puntitos pequeños pero claros
           const sz = r * 2;
-          const a = (0.15 + depth * 0.6) * (0.55 + macro * 0.45);
+          // Suelo alto: los valles de la ola siguen mostrando puntos tenues
+          const a = (0.55 + depth * 0.45) * (0.75 + macro * 0.25);
 
-          // Valles azules → crestas blancas (sensación de relieve 3D)
-          ctx.globalAlpha = whiteBase[j * cols + i] ? Math.min(1, a * 1.2) : a;
+          // Malla uniforme estilo Claude: TODOS los puntos visibles;
+          // la ola modula brillo/tamaño — valles azules → crestas blancas
+          ctx.globalAlpha = whiteBase[j * cols + i] ? Math.min(1, a * 1.35) : a;
           ctx.drawImage(whiteBase[j * cols + i] ? WHITE : BLUE, x - r, y - r, sz, sz);
-          if (depth > 0.5) {
-            ctx.globalAlpha = Math.min(1, (depth - 0.5) * 2);
+          if (depth > 0.42) {
+            ctx.globalAlpha = Math.min(1, (depth - 0.42) * 2);
             ctx.drawImage(WHITE, x - r, y - r, sz, sz);
           }
         }

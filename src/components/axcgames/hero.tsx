@@ -30,20 +30,16 @@ export default function Hero({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="relative rounded-3xl p-[1.5px]"
+        style={{
+          // Borde premium estático (azul/blanco, sin rotación)
+          background:
+            "linear-gradient(160deg, rgba(255,255,255,0.16), rgba(96,165,250,0.24) 45%, rgba(59,130,246,0.10) 72%, rgba(255,255,255,0.06))",
+        }}
       >
-        {/* Borde dorado giratorio (se asoma por el padding de 1.5px) */}
+        {/* Resplandor azul que respira suavemente alrededor de la tarjeta */}
         <div
           aria-hidden
-          className="axc-spin-slow absolute inset-[-150%]"
-          style={{
-            background:
-              "conic-gradient(from 0deg, transparent 0deg, rgba(96,165,250,0.0) 40deg, rgba(96,165,250,0.65) 60deg, rgba(253,230,138,0.9) 70deg, rgba(96,165,250,0.65) 80deg, transparent 100deg, transparent 180deg, rgba(96,165,250,0.35) 220deg, transparent 250deg)",
-          }}
-        />
-        {/* Base tenue del borde (siempre visible) */}
-        <div
-          aria-hidden
-          className="absolute inset-0 rounded-3xl border border-white/10"
+          className="axc-hero-breathe absolute -inset-4 rounded-[2.5rem] bg-blue-500/15 blur-3xl"
         />
 
         <div className="relative h-[500px] w-full overflow-hidden rounded-[calc(1.5rem-1.5px)] bg-[#000] shadow-2xl shadow-black">

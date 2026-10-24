@@ -214,25 +214,19 @@
   right: 22%;
 }
 
-/* Bordes con degradado giratorio (marco premium) */
-.axc-frame {
-  position: relative;
+/* Resplandor azul del Hero que respira suavemente (sin rotación) */
+@keyframes axc-hero-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.95;
+  }
 }
-.axc-frame::before {
-  content: "";
-  position: absolute;
-  inset: -60%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    rgba(59, 130, 246, 0.5) 38deg,
-    transparent 80deg,
-    transparent 170deg,
-    rgba(96, 165, 250, 0.32) 215deg,
-    transparent 260deg
-  );
-  animation: axc-spin-slow 16s linear infinite;
-  pointer-events: none;
+.axc-hero-breathe {
+  animation: axc-hero-breathe 6s ease-in-out infinite;
+  will-change: opacity;
 }
 
 /* Escala con brillo al hacer hover en tarjetas premium */
@@ -486,8 +480,8 @@ html {
   .axc-glow,
   .axc-text-shimmer,
   .axc-spin-slow,
+  .axc-hero-breathe,
   .axc-float,
-  .axc-frame::before,
   .axc-card-lift,
   .axc-rise-in,
   .axc-bar-grow {
