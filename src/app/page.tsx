@@ -13,6 +13,7 @@ import GameView from "@/components/axcgames/game-view";
 import Footer from "@/components/axcgames/footer";
 import AuthScreen from "@/components/axcgames/auth-screen";
 import AnimatedBg from "@/components/axcgames/animated-bg";
+import PageIntro from "@/components/axcgames/page-intro";
 import NotificationWatcher from "@/components/axcgames/notification-watcher";
 import ChatApp from "@/components/axcgames/chat/chat-app";
 import CallLayer from "@/components/axcgames/chat/call-overlay";
@@ -51,12 +52,20 @@ export default function Home() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
   const [communityGames, setCommunityGames] = useState<Game[]>([]);
+  // Coreografía de entrada: el contenido asciende al terminar la intro
+  const [introDone, setIntroDone] = useState(false);
   const { toast } = useToast();
 
   // Cargar sesión al arrancar
   useEffect(() => {
     void fetchMe();
   }, [fetchMe]);
+
+  // Red de seguridad: nunca dejar el contenido oculto si la intro fallara
+  useEffect(() => {
+    const t = window.setTimeout(() => setIntroDone(true), 4000);
+    return () => window.clearTimeout(t);
+  }, []);
 
   // Conectar socket cuando hay usuario
   useEffect(() => {
@@ -250,6 +259,9 @@ export default function Home() {
     <div className="flex min-h-dvh flex-col bg-[#000] text-white">
       <AnimatedBg dim={view === "game"} />
 
+      {/* Motion graphics de entrada (una vez por sesión) */}
+      <PageIntro onDone={() => setIntroDone(true)} />
+
       {/* Notificaciones del chat activas en TODAS las vistas (home, juego, chat) */}
       <NotificationWatcher />
 
@@ -295,10 +307,10 @@ export default function Home() {
         ) : (
           <motion.main
             key="home"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, y: 22 }}
+            animate={introDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 22 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
+            transition={{ duration: 0.55, ease: [0.22, 0.68, 0.32, 1] }}
             className="relative z-10 flex flex-1 flex-col"
           >
             {/* Juego destacado */}

@@ -167,29 +167,6 @@
   animation: axc-text-shimmer 5.5s linear infinite;
 }
 
-/* Rayo de luz que barre la pantalla de fondo */
-@keyframes axc-beam-sweep {
-  0% {
-    transform: translateX(-35vw) rotate(16deg);
-    opacity: 0;
-  }
-  12% {
-    opacity: 0.5;
-  }
-  45% {
-    transform: translateX(130vw) rotate(16deg);
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(130vw) rotate(16deg);
-    opacity: 0;
-  }
-}
-.axc-beam {
-  animation: axc-beam-sweep 16s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-
 /* Rotación lenta (bordes cónicos decorativos) */
 @keyframes axc-spin-slow {
   to {
@@ -351,71 +328,6 @@ html {
   animation: axc-loading 1.15s ease-in-out infinite;
 }
 
-/* ===== Fondo animado (aurora + grid + ruido) ===== */
-@keyframes axc-drift-a {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(8vw, 6vh, 0) scale(1.12);
-  }
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-@keyframes axc-drift-b {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1.05);
-  }
-  50% {
-    transform: translate3d(-7vw, -5vh, 0) scale(0.95);
-  }
-  100% {
-    transform: translate3d(0, 0, 0) scale(1.05);
-  }
-}
-@keyframes axc-drift-c {
-  0% {
-    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-  }
-  50% {
-    transform: translate3d(5vw, -6vh, 0) rotate(12deg) scale(1.1);
-  }
-  100% {
-    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-  }
-}
-.axc-aurora-a {
-  animation: axc-drift-a 26s ease-in-out infinite;
-  will-change: transform;
-}
-.axc-aurora-b {
-  animation: axc-drift-b 32s ease-in-out infinite;
-  will-change: transform;
-}
-.axc-aurora-c {
-  animation: axc-drift-c 38s ease-in-out infinite;
-  will-change: transform;
-}
-
-.axc-grid {
-  background-image:
-    linear-gradient(to right, rgba(96, 165, 250, 0.055) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(96, 165, 250, 0.055) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: radial-gradient(ellipse 100% 80% at 50% 25%, black 25%, transparent 78%);
-  -webkit-mask-image: radial-gradient(ellipse 100% 80% at 50% 25%, black 25%, transparent 78%);
-  animation: axc-grid-pan 70s linear infinite;
-}
-@keyframes axc-grid-pan {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 44px 44px;
-  }
-}
-
 /* ===== Animaciones de chat ===== */
 @keyframes axc-msg-in {
   0% {
@@ -566,10 +478,6 @@ html {
 
 /* Accesibilidad: reducir movimiento */
 @media (prefers-reduced-motion: reduce) {
-  .axc-aurora-a,
-  .axc-aurora-b,
-  .axc-aurora-c,
-  .axc-grid,
   .axc-pulse,
   .axc-shine::after,
   .axc-badge-pop,
@@ -577,7 +485,6 @@ html {
   .axc-marquee,
   .axc-glow,
   .axc-text-shimmer,
-  .axc-beam,
   .axc-spin-slow,
   .axc-float,
   .axc-frame::before,
