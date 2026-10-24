@@ -4,8 +4,12 @@ import { useEffect, useRef } from "react";
 
 /**
  * Fondo de puntos estilo Claude: malla regular de puntitos muy pequeños
- * azul/blanco sobre negro puro, cuyo tamaño y brillo ondulan como olas
- * en 3D (superposición de ondas que viajan + macro-onda de brillo).
+ * azul/blanco sobre negro puro, con oleaje 3D bien marcado:
+ * - Múltiples escalas de ola (mar de fondo + oleaje medio + ripples finos)
+ *   que viajan por la pantalla.
+ * - Vaivén coherente: cada punto "monta" su ola (los vecinos se mueven
+ *   juntos) → la malla ondula como una superficie de agua 3D.
+ * - Crestas que crecen y se blanquean, valles que se encogen y atenúan.
  * - Halo suave que sigue al cursor (los puntos se avivan cerca del puntero)
  * - Se pausa cuando la pestaña está oculta y respeta prefers-reduced-motion
  * - Solo canvas (drawImage de sprites pre-renderizados) → muy fluido
@@ -85,9 +89,9 @@ function DotField() {
       const t = time / 1000;
       ctx.clearRect(0, 0, w, h);
 
-      // El patrón de oleaje se traslada lento por la pantalla (olas que viajan)
-      const driftX = t * 26 + Math.sin(t * 0.1) * 120;
-      const driftY = t * 16 + Math.cos(t * 0.08) * 80;
+      // Las olas viajan rápido → oleaje claramente perceptible
+      const driftX = t * 55 + Math.sin(t * 0.1) * 120;
+      const driftY = t * 34 + Math.cos(t * 0.08) * 80;
 
       // Macro-onda: regiones amplas de brillo que recorren el fondo
       const macroA = t * 0.12;
@@ -97,25 +101,35 @@ function DotField() {
       const HALO_R = 190;
       const HR2 = HALO_R * HALO_R;
 
-      for (let j = 0; j < rows; j++) {
-        const y = j * spacing;
-        for (let i = 0; i < cols; i++) {
-          const x = i * spacing;
-          const ph = phase[j * cols + i];
+      // Amplitud del vaivén: la malla ondula como una superficie de agua
+      const SWAY = 8;
 
-          // Campo de profundidad: superposición de ondas en varias direcciones
-          const sx = x + driftX;
-          const sy = y + driftY;
+      for (let j = 0; j < rows; j++) {
+        const gy = j * spacing;
+        for (let i = 0; i < cols; i++) {
+          const gx = i * spacing;
+          const ph = phase[j * cols + i];
+          const sx = gx + driftX;
+          const sy = gy + driftY;
+
+          // Ola principal (mar de fondo, lenta y amplia)
+          const p1 = sx * 0.0046 + t * 0.5 + ph * 0.18;
+          const p2 = sy * 0.0062 - t * 0.4 + ph * 0.12;
+          const p3 = (sx + sy) * 0.0027 + t * 0.33;
+          // Onda media (viaja rápido → oleaje visible)
+          const pm = sx * 0.0115 + sy * 0.0063 - t * 1.5 + ph * 0.25;
+          // Ripple fino (mantiene la superficie "viva")
+          const pr = sx * 0.023 - t * 2.5 + ph * 0.45;
+
           let d =
-            Math.sin(sx * 0.0046 + t * 0.5 + ph * 0.18) +
-            Math.sin(sy * 0.0062 - t * 0.4 + ph * 0.12) +
-            Math.sin((sx + sy) * 0.0027 + t * 0.33);
-          d = (d / 3 + 1) / 2; // 0..1 — profundidad simulada (0 lejos, 1 cerca)
+            ((Math.sin(p1) + Math.sin(p2) + Math.sin(p3)) / 3) * 0.55 +
+            Math.sin(pm) * 0.28 +
+            Math.sin(pr) * 0.17;
+          d = (d + 1) / 2; // 0..1 — profundidad (0 valle, 1 cresta)
 
           // Halo del cursor: los puntos se avivan cerca del puntero
-          // (antes del umbral → el cursor “revela” incluso los valles)
-          const dx = x - halo.x;
-          const dy = y - halo.y;
+          const dx = gx - halo.x;
+          const dy = gy - halo.y;
           const md2 = dx * dx + dy * dy;
           let glow = 0;
           if (md2 < HR2) glow = (1 - Math.sqrt(md2) / HALO_R) * 0.85;
@@ -123,20 +137,26 @@ function DotField() {
 
           // Macro-onda de brillo
           const macro =
-            0.5 + 0.5 * Math.sin((x * 0.0011 + y * 0.0017) + macroA);
+            0.5 + 0.5 * Math.sin((gx * 0.0011 + gy * 0.0017) + macroA);
 
-          const r = 0.8 + depth * 1.3; // Ø ≈ 1.6–4.2 px → puntitos pequeños pero claros
+          // Vaivén coherente: cada punto "monta" su ola (gradiente de fase)
+          // → los vecinos se mueven juntos y la malla ondula como agua 3D
+          const px = gx + Math.cos(p1) * SWAY * 0.6 + Math.cos(pr) * SWAY * 0.4;
+          const py = gy + Math.cos(p2) * SWAY * 0.6 + Math.cos(pm) * SWAY * 0.4;
+
+          // Rango dinámico amplio: valles pequeños/tenues → crestas grandes/brillantes
+          const r = 0.7 + depth * 2.1; // Ø ≈ 1.4–5.6 px
           const sz = r * 2;
-          // Suelo alto: los valles de la ola siguen mostrando puntos tenues
-          const a = (0.55 + depth * 0.45) * (0.75 + macro * 0.25);
+          // Contraste marcado: los valles se atenúan, las crestas brillan
+          const a = (0.42 + depth * 0.58) * (0.72 + macro * 0.28);
 
-          // Malla uniforme estilo Claude: TODOS los puntos visibles;
-          // la ola modula brillo/tamaño — valles azules → crestas blancas
-          ctx.globalAlpha = whiteBase[j * cols + i] ? Math.min(1, a * 1.35) : a;
-          ctx.drawImage(whiteBase[j * cols + i] ? WHITE : BLUE, x - r, y - r, sz, sz);
-          if (depth > 0.42) {
-            ctx.globalAlpha = Math.min(1, (depth - 0.42) * 2);
-            ctx.drawImage(WHITE, x - r, y - r, sz, sz);
+          // Malla estilo Claude — valles azules → crestas blancas
+          const white = whiteBase[j * cols + i];
+          ctx.globalAlpha = white ? Math.min(1, a * 1.35) : a;
+          ctx.drawImage(white ? WHITE : BLUE, px - r, py - r, sz, sz);
+          if (depth > 0.4) {
+            ctx.globalAlpha = Math.min(1, (depth - 0.4) * 2.4);
+            ctx.drawImage(WHITE, px - r, py - r, sz, sz);
           }
         }
       }
