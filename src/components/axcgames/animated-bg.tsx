@@ -3,10 +3,13 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Fondo de puntos estilo Claude: malla regular de puntitos muy pequeños
- * azul/blanco sobre negro puro, con oleaje 3D bien marcado:
+ * Fondo de puntos estilo Claude: malla regular de puntitos muy finos
+ * azul marino/blanco sobre negro puro, con oleaje 3D bien marcado:
+ * - Puntos finos y nítidos (núcleo compacto en el sprite) — Ø 1.2–4 px.
+ * - Azul marino vivo y siempre visible: suelo de alpha alto (los valles
+ *   ya no se apagan a azul oscuro casi invisible).
  * - Múltiples escalas de ola (mar de fondo + oleaje medio + ripples finos)
- *   que viajan por la pantalla.
+ *   que viajan rápido por la pantalla.
  * - Vaivén coherente: cada punto "monta" su ola (los vecinos se mueven
  *   juntos) → la malla ondula como una superficie de agua 3D.
  * - Crestas que crecen y se blanquean, valles que se encogen y atenúan.
@@ -38,14 +41,15 @@ function DotField() {
       const c = s.getContext("2d");
       if (!c) return s;
       const grad = c.createRadialGradient(8, 8, 0, 8, 8, 8);
+      // Núcleo compacto y sólido → puntos finos PERO brillantes aunque sean diminutos
       grad.addColorStop(0, `rgba(${r},${g},${b},1)`);
-      grad.addColorStop(0.45, `rgba(${r},${g},${b},0.9)`);
+      grad.addColorStop(0.6, `rgba(${r},${g},${b},0.95)`);
       grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
       c.fillStyle = grad;
       c.fillRect(0, 0, 16, 16);
       return s;
     };
-    const BLUE = makeSprite(96, 165, 250); // blue-400
+    const BLUE = makeSprite(82, 154, 255); // azul marino luminoso y saturado, muy visible sobre negro
     const WHITE = makeSprite(255, 255, 255);
 
     let cols = 0;
@@ -60,15 +64,15 @@ function DotField() {
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      spacing = w < 640 ? 26 : 30;
+      spacing = w < 640 ? 24 : 28;
       cols = Math.ceil(w / spacing) + 2;
       rows = Math.ceil(h / spacing) + 2;
       phase = new Float32Array(cols * rows);
       whiteBase = new Uint8Array(cols * rows);
       for (let i = 0; i < phase.length; i++) {
         phase[i] = Math.random() * Math.PI * 2;
-        // ~13% de puntos blancos de base → mezcla azul/blanca siempre visible
-        whiteBase[i] = Math.random() < 0.13 ? 1 : 0;
+        // ~11% de puntos blancos de base → el azul marino domina el campo
+        whiteBase[i] = Math.random() < 0.11 ? 1 : 0;
       }
       if (reduced) draw(4000); // versión estática para reduced-motion
     };
@@ -90,11 +94,11 @@ function DotField() {
       ctx.clearRect(0, 0, w, h);
 
       // Las olas viajan rápido → oleaje claramente perceptible
-      const driftX = t * 55 + Math.sin(t * 0.1) * 120;
-      const driftY = t * 34 + Math.cos(t * 0.08) * 80;
+      const driftX = t * 72 + Math.sin(t * 0.12) * 140;
+      const driftY = t * 46 + Math.cos(t * 0.09) * 90;
 
       // Macro-onda: regiones amplas de brillo que recorren el fondo
-      const macroA = t * 0.12;
+      const macroA = t * 0.18;
 
       halo.x += (target.x - halo.x) * 0.09;
       halo.y += (target.y - halo.y) * 0.09;
@@ -102,7 +106,7 @@ function DotField() {
       const HR2 = HALO_R * HALO_R;
 
       // Amplitud del vaivén: la malla ondula como una superficie de agua
-      const SWAY = 8;
+      const SWAY = 9;
 
       for (let j = 0; j < rows; j++) {
         const gy = j * spacing;
@@ -113,13 +117,13 @@ function DotField() {
           const sy = gy + driftY;
 
           // Ola principal (mar de fondo, lenta y amplia)
-          const p1 = sx * 0.0046 + t * 0.5 + ph * 0.18;
-          const p2 = sy * 0.0062 - t * 0.4 + ph * 0.12;
-          const p3 = (sx + sy) * 0.0027 + t * 0.33;
+          const p1 = sx * 0.0046 + t * 0.65 + ph * 0.18;
+          const p2 = sy * 0.0062 - t * 0.52 + ph * 0.12;
+          const p3 = (sx + sy) * 0.0027 + t * 0.42;
           // Onda media (viaja rápido → oleaje visible)
-          const pm = sx * 0.0115 + sy * 0.0063 - t * 1.5 + ph * 0.25;
+          const pm = sx * 0.0115 + sy * 0.0063 - t * 2.0 + ph * 0.25;
           // Ripple fino (mantiene la superficie "viva")
-          const pr = sx * 0.023 - t * 2.5 + ph * 0.45;
+          const pr = sx * 0.023 - t * 3.3 + ph * 0.45;
 
           let d =
             ((Math.sin(p1) + Math.sin(p2) + Math.sin(p3)) / 3) * 0.55 +
@@ -144,18 +148,19 @@ function DotField() {
           const px = gx + Math.cos(p1) * SWAY * 0.6 + Math.cos(pr) * SWAY * 0.4;
           const py = gy + Math.cos(p2) * SWAY * 0.6 + Math.cos(pm) * SWAY * 0.4;
 
-          // Rango dinámico amplio: valles pequeños/tenues → crestas grandes/brillantes
-          const r = 0.7 + depth * 2.1; // Ø ≈ 1.4–5.6 px
+          // Puntos finos: Ø ≈ 1.3–4 px (base diminuta, cresta compacta)
+          const r = 0.65 + depth * 1.4;
           const sz = r * 2;
-          // Contraste marcado: los valles se atenúan, las crestas brillan
-          const a = (0.42 + depth * 0.58) * (0.72 + macro * 0.28);
+          // Azul marino siempre visible: suelo de alpha alto (0.65) y macro
+          // que apenas atenúa → los valles siguen leyéndose como azul
+          const a = (0.65 + depth * 0.35) * (0.85 + macro * 0.15);
 
           // Malla estilo Claude — valles azules → crestas blancas
           const white = whiteBase[j * cols + i];
           ctx.globalAlpha = white ? Math.min(1, a * 1.35) : a;
           ctx.drawImage(white ? WHITE : BLUE, px - r, py - r, sz, sz);
-          if (depth > 0.4) {
-            ctx.globalAlpha = Math.min(1, (depth - 0.4) * 2.4);
+          if (depth > 0.45) {
+            ctx.globalAlpha = Math.min(1, (depth - 0.45) * 2.2);
             ctx.drawImage(WHITE, px - r, py - r, sz, sz);
           }
         }
