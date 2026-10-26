@@ -418,5 +418,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#f97316"
+  },
+  {
+    "id": "fnaf-multijugador-rpkx",
+    "title": "FNAF: Multijugador",
+    "tagline": ".",
+    "description": ".",
+    "longDescription": ". Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.",
+    "cover": "/games/community/fnaf-multijugador-rpkx.jpg",
+    "url": "https://axcgamestudios2.github.io/fnafm/",
+    "categories": [
+      "Acción"
+    ],
+    "tags": [
+      "Acción",
+      "Comunidad"
+    ],
+    "rating": 4.8,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#f97316"
   }
 ]
