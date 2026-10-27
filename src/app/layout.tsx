@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Space_Grotesk, Unbounded } from "next/font/google";
+import { Chakra_Petch, Geist_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -9,10 +9,13 @@ const spaceGrotesk = Space_Grotesk({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-const unbounded = Unbounded({
-  variable: "--font-unbounded",
+// Display tech/gaming: cuadrada, muy legible y profesional — combina con
+// el tema azul/negro del sitio sin sacrificar la lectura (sustituye a
+// Unbounded, demasiado ancha y difícil de leer en títulos largos).
+const chakraPetch = Chakra_Petch({
+  variable: "--font-chakra-petch",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -65,7 +68,7 @@ export default function RootLayout({
   return (
     <html lang="es" className="dark" suppressHydrationWarning>
       <body
-        className={`${spaceGrotesk.variable} ${geistMono.variable} ${unbounded.variable} antialiased bg-black text-white`}
+        className={`${spaceGrotesk.variable} ${geistMono.variable} ${chakraPetch.variable} antialiased bg-black text-white`}
       >
         {children}
         <Toaster />

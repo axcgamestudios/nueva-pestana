@@ -92,7 +92,7 @@ export default function Hero({
               <h1 className="font-display text-3xl font-extrabold leading-[1.08] sm:text-4xl lg:text-5xl">
                 <span className="axc-text-shimmer">{game.title.toUpperCase()}</span>
               </h1>
-              <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/75 sm:text-base">
+              <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/80 sm:text-base">
                 {game.description}
               </p>
 

@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Gamepad2, SearchX, ShieldCheck, Trophy, Zap } from "lucide-react";
 import { allCategories, featuredGame, games, type Game } from "@/lib/games";
 import { fetchCommunityGames } from "@/lib/community-games";
+import { fetchSiteConfig } from "@/lib/site-config";
 import { useAxStore } from "@/lib/store";
 import Header from "@/components/axcgames/header";
 import Hero from "@/components/axcgames/hero";
@@ -52,6 +53,8 @@ export default function Home() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
   const [communityGames, setCommunityGames] = useState<Game[]>([]);
+  // Id del juego destacado elegido desde el panel (null = juego por defecto)
+  const [featuredId, setFeaturedId] = useState<string | null>(null);
   // Coreografía de entrada: el contenido asciende al terminar la intro
   const [introDone, setIntroDone] = useState(false);
   const { toast } = useToast();
@@ -106,9 +109,31 @@ export default function Home() {
     };
   }, []);
 
+  // Config del sitio: qué juego está destacado (elegido desde el panel)
+  useEffect(() => {
+    let alive = true;
+    fetchSiteConfig()
+      .then((cfg) => {
+        if (alive) setFeaturedId(cfg.featuredId);
+      })
+      .catch(() => {
+        /* sin config disponible: se usa el destacado por defecto */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const allGames = useMemo(
     () => [...games, ...communityGames],
     [communityGames]
+  );
+
+  // Juego del hero: el destacado seleccionado (comunitario u oficial) o el
+  // primero por defecto si no hay selección / el id ya no existe.
+  const heroGame = useMemo(
+    () => allGames.find((g) => g.id === featuredId) ?? featuredGame,
+    [allGames, featuredId]
   );
 
   // Cargar favoritos y recientes desde localStorage (tras el montaje)
@@ -315,11 +340,12 @@ export default function Home() {
             transition={{ duration: 0.55, ease: [0.22, 0.68, 0.32, 1] }}
             className="relative z-10 flex flex-1 flex-col"
           >
-            {/* Juego destacado */}
+            {/* Juego destacado (seleccionable desde el panel de admin) */}
             <Hero
-              game={featuredGame}
+              key={heroGame.id}
+              game={heroGame}
               onPlay={handleOpenGame}
-              isFavorite={favorites.includes(featuredGame.id)}
+              isFavorite={favorites.includes(heroGame.id)}
               onToggleFavorite={toggleFavorite}
               onExplore={() =>
                 document.getElementById("juegos")?.scrollIntoView({ behavior: "smooth" })
@@ -511,6 +537,7 @@ export default function Home() {
                       isFavorite={favorites.includes(g.id)}
                       onToggleFavorite={toggleFavorite}
                       priority={i < 2}
+                      featured={g.id === heroGame.id}
                     />
                   ))}
                 </div>

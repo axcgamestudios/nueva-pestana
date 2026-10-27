@@ -18,14 +18,17 @@ import {
   ImagePlus,
   Loader2,
   Lock,
+  Pencil,
   RefreshCw,
   Send,
   ShieldAlert,
+  Star,
   Trash2,
   UploadCloud,
   X,
 } from "lucide-react";
-import { allCategories, type Game } from "@/lib/games";
+import { allCategories, games as officialGames, type Game } from "@/lib/games";
+import { asset } from "@/lib/paths";
 import DevPanelPlaytime from "./dev-panel-playtime";
 
 /* ------------------------------------------------------------------ */
@@ -36,7 +39,7 @@ const REPO = "axcgamestudios/nueva-pestana";
 export const PT_JSON_PATH = "public/data/playtime-config.json";
 const API_ROOT = "https://api.github.com";
 const JSON_PATH = "public/data/community-games.json";
-const IMG_DIR = "public/games/community";
+const SITE_CONFIG_PATH = "public/data/site-config.json";
 const RAW_ROOT = `https://raw.githubusercontent.com/${REPO}/main`;
 
 export const TOKEN_KEY = "axcgames:dev-token";
@@ -227,6 +230,22 @@ async function readCatalog(token: string): Promise<{ list: Game[]; sha?: string 
   }
 }
 
+/** Lee la config del sitio (juego destacado seleccionado). */
+async function readSiteConfig(token: string): Promise<string | null> {
+  try {
+    const file = await ghRequest<GhContent>(
+      `/repos/${REPO}/contents/${SITE_CONFIG_PATH}?t=${Date.now()}`,
+      token
+    );
+    const parsed: unknown = JSON.parse(base64ToUtf8(file.content ?? "null"));
+    const fid = (parsed as { featuredId?: unknown } | null)?.featuredId;
+    return typeof fid === "string" && fid.trim() ? fid : null;
+  } catch (err) {
+    if ((err as GhError).status === 404) return null;
+    throw err;
+  }
+}
+
 /** Lee una imagen y la recorta a 1344x768 (JPEG base64). */
 async function fileToCoverBase64(file: File): Promise<string> {
   const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -272,9 +291,15 @@ export default function DevPanel() {
   const [link, setLink] = useState("");
   const [cat, setCat] = useState("Acción");
   const [coverB64, setCoverB64] = useState("");
+  // Juego en edición (null = modo publicar)
+  const [editing, setEditing] = useState<Game | null>(null);
 
   const [list, setList] = useState<Game[]>([]);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  // Id del juego destacado actualmente (leído de site-config.json)
+  const [featuredId, setFeaturedId] = useState<string | null>(null);
+
+  const formRef = useRef<HTMLFormElement>(null);
 
   const seqBuffer = useRef("");
   const seqTimer = useRef(0);
@@ -372,6 +397,11 @@ export default function DevPanel() {
     } catch {
       /* se muestra al interactuar */
     }
+    try {
+      setFeaturedId(await readSiteConfig(t));
+    } catch {
+      /* sin config legible: destacado por defecto */
+    }
   }, []);
 
   useEffect(() => {
@@ -401,13 +431,44 @@ export default function DevPanel() {
     }
   }, []);
 
+  /* Editar juego publicado -------------------------------------------- */
+
+  const startEdit = useCallback((g: Game) => {
+    setEditing(g);
+    setName(g.title);
+    setDesc(g.description || g.tagline || "");
+    setLink(g.url);
+    setCat(g.categories?.[0] ?? "Acción");
+    setCoverB64(""); // vacío = conservar la portada actual
+    setError("");
+    setOk("");
+    setConfirmDelete(null);
+    // Sube al formulario para ver los campos cargados
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const cancelEdit = useCallback(() => {
+    setEditing(null);
+    setName("");
+    setDesc("");
+    setLink("");
+    setCat("Acción");
+    setCoverB64("");
+    setError("");
+  }, []);
+
   const submit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       setError("");
       setOk("");
-      if (!name.trim() || !desc.trim() || !link.trim() || !coverB64) {
-        setError("Completa todos los campos: nombre, descripción, link y portada.");
+      const isEdit = Boolean(editing);
+      if (!name.trim() || !desc.trim() || !link.trim() || (!isEdit && !coverB64)) {
+        setError(
+          isEdit
+            ? "Completa nombre, descripción y link (la portada es opcional al editar)."
+            : "Completa todos los campos: nombre, descripción, link y portada."
+        );
         return;
       }
       const t = localStorage.getItem(TOKEN_KEY) ?? "";
@@ -418,48 +479,84 @@ export default function DevPanel() {
       let url = link.trim();
       if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
 
-      const id = `${slugify(name)}-${Date.now().toString(36).slice(-4)}`;
-      const game: Game = {
-        id,
-        title: name.trim(),
-        tagline: desc.trim().slice(0, 90),
-        description: desc.trim(),
-        longDescription: `${desc.trim()} Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.`,
-        cover: `/games/community/${id}.jpg`,
-        url,
-        categories: [cat],
-        tags: [cat, "Comunidad"],
-        rating: Math.round((4.5 + Math.random() * 0.4) * 10) / 10,
-        players: "Nuevo",
-        difficulty: "Media",
-        accent: ACCENTS[Math.floor(Math.random() * ACCENTS.length)] ?? "#60a5fa",
-      };
+      let game: Game;
+      if (editing) {
+        // Edición: conserva id, portada (si no se cambia), rating, jugadores,
+        // dificultad y accent del juego original; solo reescribe lo editable.
+        game = {
+          ...editing,
+          title: name.trim(),
+          tagline: desc.trim().slice(0, 90),
+          description: desc.trim(),
+          longDescription: `${desc.trim()} Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.`,
+          url,
+          categories: [cat],
+          tags: Array.from(new Set([cat, ...(editing.tags ?? [])])),
+        };
+      } else {
+        const id = `${slugify(name)}-${Date.now().toString(36).slice(-4)}`;
+        game = {
+          id,
+          title: name.trim(),
+          tagline: desc.trim().slice(0, 90),
+          description: desc.trim(),
+          longDescription: `${desc.trim()} Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.`,
+          cover: `/games/community/${id}.jpg`,
+          url,
+          categories: [cat],
+          tags: [cat, "Comunidad"],
+          rating: Math.round((4.5 + Math.random() * 0.4) * 10) / 10,
+          players: "Nuevo",
+          difficulty: "Media",
+          accent: ACCENTS[Math.floor(Math.random() * ACCENTS.length)] ?? "#60a5fa",
+        };
+      }
 
       try {
-        setBusy("Publicando juego…");
+        setBusy(isEdit ? "Guardando cambios…" : "Publicando juego…");
         const current = await readCatalog(t);
-        const next = [...current.list, game];
+        let next: Game[];
+        if (editing) {
+          const idx = current.list.findIndex((x) => x.id === game.id);
+          if (idx === -1) {
+            throw new Error("El juego ya no existe en el catálogo; refresca la lista.");
+          }
+          next = current.list.map((x) => (x.id === game.id ? game : x));
+        } else {
+          next = [...current.list, game];
+        }
         const jsonB64 = utf8ToBase64(JSON.stringify(next, null, 2) + "\n");
 
-        // Un único commit atómico: portada + catálogo juntos → un único deploy
-        await commitFiles(t, `panel: añadir ${game.title}`, [
-          {
-            path: `${IMG_DIR}/${id}.jpg`,
-            mode: "100644",
-            type: "blob",
-            sha: await createBlob(t, coverB64),
-          },
+        // Un único commit atómico: catálogo (+ portada nueva/substituida si toca)
+        // → un solo deploy de Pages.
+        const entries: TreeEntry[] = [
           {
             path: JSON_PATH,
             mode: "100644",
             type: "blob",
             sha: await createBlob(t, jsonB64),
           },
-        ]);
+        ];
+        if (coverB64) {
+          entries.push({
+            path: repoCoverPath(game.cover),
+            mode: "100644",
+            type: "blob",
+            sha: await createBlob(t, coverB64),
+          });
+        }
+        await commitFiles(
+          t,
+          isEdit ? `panel: editar ${game.title}` : `panel: añadir ${game.title}`,
+          entries
+        );
 
         setOk(
-          "¡Juego publicado! El sitio se reconstruye solo en ~2 minutos. Refresca la página dentro de un rato y aparecerá para todos."
+          isEdit
+            ? "¡Cambios guardados! El sitio se reconstruye solo en ~2 minutos y todos verán la actualización."
+            : "¡Juego publicado! El sitio se reconstruye solo en ~2 minutos. Refresca la página dentro de un rato y aparecerá para todos."
         );
+        setEditing(null);
         setName("");
         setDesc("");
         setLink("");
@@ -485,7 +582,53 @@ export default function DevPanel() {
         setBusy("");
       }
     },
-    [name, desc, link, cat, coverB64, refreshList]
+    [name, desc, link, cat, coverB64, editing, refreshList]
+  );
+
+  /* Destacar juego (hero del sitio) ------------------------------------- */
+
+  const setFeatured = useCallback(
+    async (id: string | null) => {
+      const t = localStorage.getItem(TOKEN_KEY) ?? "";
+      if (!t) return;
+      try {
+        setBusy(id ? "Destacando juego…" : "Restableciendo destacado…");
+        const jsonB64 = utf8ToBase64(JSON.stringify({ featuredId: id }, null, 2) + "\n");
+        await commitFiles(
+          t,
+          id ? `panel: destacar ${id}` : "panel: quitar destacado",
+          [
+            {
+              path: SITE_CONFIG_PATH,
+              mode: "100644",
+              type: "blob",
+              sha: await createBlob(t, jsonB64),
+            },
+          ]
+        );
+        setFeaturedId(id);
+        setOk(
+          id
+            ? "¡Juego destacado! Aparecerá en el hero del sitio tras el rebuild (~2 minutos)."
+            : "Destacado restablecido: el hero vuelve al juego por defecto."
+        );
+      } catch (err) {
+        const ghErr = err as GhError;
+        if (ghErr.status === 401 || ghErr.status === 403) {
+          try {
+            localStorage.removeItem(TOKEN_KEY);
+          } catch {
+            /* ignorar */
+          }
+          setPhase("token");
+        } else {
+          setError(ghErr.message || "No se pudo actualizar el destacado.");
+        }
+      } finally {
+        setBusy("");
+      }
+    },
+    []
   );
 
   /* Borrar juego -------------------------------------------------------- */
@@ -714,8 +857,30 @@ export default function DevPanel() {
 
                 {tab === "juegos" && (
                   <>
-                {/* Formulario */}
-                <form onSubmit={submit} className="space-y-4">
+                {/* Formulario (publicar o editar) */}
+                <form ref={formRef} onSubmit={submit} className="space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="font-display text-xs font-bold uppercase tracking-[0.25em] text-white/60">
+                      {editing ? "EDITAR JUEGO" : "PUBLICAR JUEGO NUEVO"}
+                    </h3>
+                    {editing && (
+                      <button
+                        type="button"
+                        onClick={cancelEdit}
+                        className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/70 transition hover:border-white/35 hover:text-white active:scale-95"
+                      >
+                        Cancelar edición
+                      </button>
+                    )}
+                  </div>
+                  {editing && (
+                    <div className="flex items-center gap-2.5 rounded-xl border border-blue-400/25 bg-blue-400/10 px-4 py-3 text-sm text-blue-200">
+                      <Pencil className="h-4 w-4 shrink-0" />
+                      Editando
+                      <b className="truncate text-white">{editing.title}</b> —
+                      rating, jugadores y color se conservan.
+                    </div>
+                  )}
                   <div>
                     <label htmlFor="dev-name" className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-white/50">
                       Nombre del juego
@@ -807,6 +972,34 @@ export default function DevPanel() {
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
+                    ) : editing ? (
+                      <div className="space-y-2">
+                        <div className="relative overflow-hidden rounded-xl border border-white/10">
+                          <img
+                            src={`${RAW_ROOT}${editing.cover}?t=${Date.now()}`}
+                            alt="Portada actual"
+                            className="h-40 w-full object-cover"
+                          />
+                          <span className="absolute bottom-2 left-2 rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white/85 backdrop-blur">
+                            Portada actual
+                          </span>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          aria-label="Reemplazar imagen de portada"
+                          onClick={(e) => {
+                            e.currentTarget.value = "";
+                          }}
+                          onChange={(e) => {
+                            void onCoverChange(e.target.files?.[0] ?? null);
+                          }}
+                          className="block w-full text-xs text-white/40 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-blue-400/15 file:px-4 file:py-2 file:text-xs file:font-bold file:text-blue-300 hover:file:bg-blue-400/25"
+                        />
+                        <p className="text-xs text-white/35">
+                          Opcional: elige una imagen para reemplazar la portada actual.
+                        </p>
+                      </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.03] px-4 py-6 text-center transition hover:border-blue-400/40 hover:bg-blue-400/5">
                         <ImagePlus className="h-6 w-6 text-white/40" />
@@ -835,11 +1028,23 @@ export default function DevPanel() {
 
                   <button
                     type="submit"
-                    disabled={Boolean(busy) || !name.trim() || !desc.trim() || !link.trim() || !coverB64}
+                    disabled={
+                      Boolean(busy) ||
+                      !name.trim() ||
+                      !desc.trim() ||
+                      !link.trim() ||
+                      (!editing && !coverB64)
+                    }
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 px-5 py-3 font-display text-sm font-bold tracking-wide text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 active:scale-95 disabled:opacity-40"
                   >
-                    <UploadCloud className="h-4 w-4" />
-                    {busy ? "PUBLICANDO…" : "PUBLICAR JUEGO"}
+                    {editing ? <Pencil className="h-4 w-4" /> : <UploadCloud className="h-4 w-4" />}
+                    {busy
+                      ? editing
+                        ? "GUARDANDO…"
+                        : "PUBLICANDO…"
+                      : editing
+                        ? "GUARDAR CAMBIOS"
+                        : "PUBLICAR JUEGO"}
                   </button>
                 </form>
 
@@ -864,10 +1069,17 @@ export default function DevPanel() {
                     </p>
                   ) : (
                     <ul className="space-y-2">
-                      {list.map((g) => (
+                      {list.map((g) => {
+                        const isFeatured = featuredId === g.id;
+                        return (
                         <li
                           key={g.id}
-                          className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-2.5"
+                          className={
+                            "flex items-center gap-3 rounded-xl border p-2.5 transition " +
+                            (isFeatured
+                              ? "border-blue-400/40 bg-blue-400/10"
+                              : "border-white/10 bg-white/[0.03]")
+                          }
                         >
                           <img
                             src={`${RAW_ROOT}${g.cover}?t=${Date.now()}`}
@@ -880,6 +1092,38 @@ export default function DevPanel() {
                               {g.categories?.[0] ?? "Comunidad"} · {g.description || "Sin descripción"}
                             </p>
                           </div>
+                          <button
+                            type="button"
+                            onClick={() => void setFeatured(isFeatured ? null : g.id)}
+                            disabled={Boolean(busy)}
+                            aria-label={
+                              isFeatured
+                                ? `Quitar a ${g.title} como destacado`
+                                : `Destacar ${g.title}`
+                            }
+                            title={isFeatured ? "Quitar destacado" : "Destacar (hero del sitio)"}
+                            className={
+                              "rounded-full border p-2 transition active:scale-95 disabled:opacity-50 " +
+                              (isFeatured
+                                ? "border-blue-400/60 bg-blue-400/15 text-blue-300"
+                                : "border-white/10 text-white/45 hover:border-blue-400/50 hover:text-blue-400")
+                            }
+                          >
+                            <Star
+                              className="h-4 w-4"
+                              fill={isFeatured ? "currentColor" : "none"}
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => startEdit(g)}
+                            disabled={Boolean(busy)}
+                            aria-label={`Editar ${g.title}`}
+                            title="Editar juego"
+                            className="rounded-full border border-white/10 p-2 text-white/45 transition hover:border-white/30 hover:text-white active:scale-95 disabled:opacity-50"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
                           {confirmDelete === g.id ? (
                             <button
                               type="button"
@@ -900,15 +1144,74 @@ export default function DevPanel() {
                             </button>
                           )}
                         </li>
-                      ))}
+                        );
+                      })}
                     </ul>
                   )}
                 </div>
 
+                {/* Juegos oficiales (destacables) */}
+                <div className="border-t border-white/10 pt-5">
+                  <h3 className="mb-3 font-display text-xs font-bold uppercase tracking-[0.25em] text-white/60">
+                    JUEGOS OFICIALES ({officialGames.length})
+                  </h3>
+                  <ul className="space-y-2">
+                    {officialGames.map((g) => {
+                      const isFeatured = featuredId === g.id;
+                      return (
+                        <li
+                          key={g.id}
+                          className={
+                            "flex items-center gap-3 rounded-xl border p-2.5 transition " +
+                            (isFeatured
+                              ? "border-blue-400/40 bg-blue-400/10"
+                              : "border-white/10 bg-white/[0.03]")
+                          }
+                        >
+                          <img
+                            src={asset(g.cover)}
+                            alt=""
+                            className="h-10 w-16 shrink-0 rounded-md object-cover"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-bold text-white">{g.title}</p>
+                            <p className="truncate text-xs text-white/40">
+                              {g.categories?.[0] ?? "—"} · oficial
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => void setFeatured(isFeatured ? null : g.id)}
+                            disabled={Boolean(busy)}
+                            aria-label={
+                              isFeatured
+                                ? `Quitar a ${g.title} como destacado`
+                                : `Destacar ${g.title}`
+                            }
+                            title={isFeatured ? "Quitar destacado" : "Destacar (hero del sitio)"}
+                            className={
+                              "rounded-full border p-2 transition active:scale-95 disabled:opacity-50 " +
+                              (isFeatured
+                                ? "border-blue-400/60 bg-blue-400/15 text-blue-300"
+                                : "border-white/10 text-white/45 hover:border-blue-400/50 hover:text-blue-400")
+                            }
+                          >
+                            <Star
+                              className="h-4 w-4"
+                              fill={isFeatured ? "currentColor" : "none"}
+                            />
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+
                 <p className="flex items-start gap-2 text-xs leading-relaxed text-white/30">
                   <Send className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  Cada publicación se guarda en el repositorio y GitHub Pages reconstruye el
-                  sitio en ~2 minutos; después el juego aparece para todos los visitantes.
+                  Cada cambio se guarda en el repositorio y GitHub Pages reconstruye el
+                  sitio en ~2 minutos; después todos los visitantes lo ven. El juego con la
+                  estrella aparece en el hero de la portada.
                 </p>
                   </>
                 )}

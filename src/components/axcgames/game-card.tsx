@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { Heart, Play, Star, Users } from "lucide-react";
+import { Flame, Heart, Play, Star, Users } from "lucide-react";
 import type { Game } from "@/lib/games";
 import { asset } from "@/lib/paths";
 
@@ -13,6 +13,8 @@ type Props = {
   onToggleFavorite: (id: string) => void;
   index?: number;
   priority?: boolean;
+  /** Juego destacado del hero → luce el distintivo en la tarjeta. */
+  featured?: boolean;
 };
 
 export default function GameCard({
@@ -22,6 +24,7 @@ export default function GameCard({
   onToggleFavorite,
   index = 0,
   priority = false,
+  featured = false,
 }: Props) {
   // Tilt 3D suave que sigue el cursor
   const mx = useMotionValue(0.5);
@@ -92,13 +95,21 @@ export default function GameCard({
             }}
           />
 
-          {/* category badge */}
-          <span
-            className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-lg transition-transform duration-300 group-hover:scale-105"
-            style={{ backgroundColor: game.accent }}
-          >
-            {game.categories[0]}
-          </span>
+          {/* badges superiores: destacado + categoría */}
+          <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
+            {featured && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-500 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-lg shadow-blue-500/50">
+                <Flame className="h-3 w-3" fill="currentColor" />
+                Destacado
+              </span>
+            )}
+            <span
+              className="rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-lg transition-transform duration-300 group-hover:scale-105"
+              style={{ backgroundColor: game.accent }}
+            >
+              {game.categories[0]}
+            </span>
+          </div>
 
           {/* favorite button */}
           <motion.button
