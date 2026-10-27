@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Gamepad2, SearchX, ShieldCheck, Trophy, Zap } from "lucide-react";
 import { allCategories, featuredGame, games, type Game } from "@/lib/games";
 import { fetchCommunityGames } from "@/lib/community-games";
+import { fetchOfficialOverrides, applyOverride, type GameOverrides } from "@/lib/official-overrides";
 import { fetchSiteConfig } from "@/lib/site-config";
 import { useAxStore } from "@/lib/store";
 import Header from "@/components/axcgames/header";
@@ -53,6 +54,8 @@ export default function Home() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
   const [communityGames, setCommunityGames] = useState<Game[]>([]);
+  // Ediciones de los juegos oficiales hechas desde el panel (id → campos)
+  const [officialOverrides, setOfficialOverrides] = useState<GameOverrides>({});
   // Id del juego destacado elegido desde el panel (null = juego por defecto)
   const [featuredId, setFeaturedId] = useState<string | null>(null);
   // Coreografía de entrada: el contenido asciende al terminar la intro
@@ -124,9 +127,30 @@ export default function Home() {
     };
   }, []);
 
+  // Ediciones de los juegos oficiales (hechas desde el panel)
+  useEffect(() => {
+    let alive = true;
+    fetchOfficialOverrides()
+      .then((o) => {
+        if (alive) setOfficialOverrides(o);
+      })
+      .catch(() => {
+        /* sin ediciones disponibles: se muestran los datos originales */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Juegos oficiales con sus ediciones aplicadas + catálogo comunitario
+  const officialGames = useMemo(
+    () => games.map((g) => applyOverride(g, officialOverrides)),
+    [officialOverrides]
+  );
+
   const allGames = useMemo(
-    () => [...games, ...communityGames],
-    [communityGames]
+    () => [...officialGames, ...communityGames],
+    [officialGames, communityGames]
   );
 
   // Juego del hero: el destacado seleccionado (comunitario u oficial) o el

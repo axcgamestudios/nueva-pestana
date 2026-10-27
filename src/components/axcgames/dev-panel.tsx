@@ -4,8 +4,9 @@
  * Panel de desarrollador (característica interna).
  *
  * Se invoca con la secuencia de teclas J → K → L y está protegido por
- * contraseña. Permite publicar juegos al catálogo comunitario: los datos
- * se guardan en el repositorio vía la API de GitHub (Contents), de modo
+ * contraseña. Permite publicar juegos al catálogo comunitario, editar
+ * cualquier juego (oficial o subido) y elegir el destacado del hero. Los
+ * datos se guardan en el repositorio vía la API de GitHub (Contents), de
  * que GitHub Pages los reconstruye y quedan disponibles para todos los
  * visitantes. El token de acceso se guarda únicamente en el navegador
  * del desarrollador (localStorage), nunca en el código del sitio.
@@ -24,10 +25,12 @@ import {
   ShieldAlert,
   Star,
   Trash2,
+  Undo2,
   UploadCloud,
   X,
 } from "lucide-react";
 import { allCategories, games as officialGames, type Game } from "@/lib/games";
+import { applyOverride, type GameOverride, type GameOverrides } from "@/lib/official-overrides";
 import { asset } from "@/lib/paths";
 import DevPanelPlaytime from "./dev-panel-playtime";
 
@@ -40,6 +43,7 @@ export const PT_JSON_PATH = "public/data/playtime-config.json";
 const API_ROOT = "https://api.github.com";
 const JSON_PATH = "public/data/community-games.json";
 const SITE_CONFIG_PATH = "public/data/site-config.json";
+const OVERRIDES_PATH = "public/data/official-overrides.json";
 const RAW_ROOT = `https://raw.githubusercontent.com/${REPO}/main`;
 
 export const TOKEN_KEY = "axcgames:dev-token";
@@ -246,6 +250,22 @@ async function readSiteConfig(token: string): Promise<string | null> {
   }
 }
 
+/** Lee las ediciones de los juegos oficiales (official-overrides.json). */
+async function readOverrides(token: string): Promise<GameOverrides> {
+  try {
+    const file = await ghRequest<GhContent>(
+      `/repos/${REPO}/contents/${OVERRIDES_PATH}?t=${Date.now()}`,
+      token
+    );
+    const parsed: unknown = JSON.parse(base64ToUtf8(file.content ?? "{}"));
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    return parsed as GameOverrides;
+  } catch (err) {
+    if ((err as GhError).status === 404) return {};
+    throw err;
+  }
+}
+
 /** Lee una imagen y la recorta a 1344x768 (JPEG base64). */
 async function fileToCoverBase64(file: File): Promise<string> {
   const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -293,11 +313,17 @@ export default function DevPanel() {
   const [coverB64, setCoverB64] = useState("");
   // Juego en edición (null = modo publicar)
   const [editing, setEditing] = useState<Game | null>(null);
+  // ¿El juego en edición es oficial? (se guarda como edición aparte)
+  const [editingOfficial, setEditingOfficial] = useState(false);
+  const [tagline, setTagline] = useState("");
+  const [longDesc, setLongDesc] = useState("");
 
   const [list, setList] = useState<Game[]>([]);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   // Id del juego destacado actualmente (leído de site-config.json)
   const [featuredId, setFeaturedId] = useState<string | null>(null);
+  // Ediciones de los juegos oficiales (leídas de official-overrides.json)
+  const [overrides, setOverrides] = useState<GameOverrides>({});
 
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -402,6 +428,11 @@ export default function DevPanel() {
     } catch {
       /* sin config legible: destacado por defecto */
     }
+    try {
+      setOverrides(await readOverrides(t));
+    } catch {
+      /* sin ediciones legibles: se muestran los originales */
+    }
   }, []);
 
   useEffect(() => {
@@ -433,10 +464,13 @@ export default function DevPanel() {
 
   /* Editar juego publicado -------------------------------------------- */
 
-  const startEdit = useCallback((g: Game) => {
+  const startEdit = useCallback((g: Game, official = false) => {
     setEditing(g);
+    setEditingOfficial(official);
     setName(g.title);
+    setTagline(g.tagline || "");
     setDesc(g.description || g.tagline || "");
+    setLongDesc(g.longDescription || "");
     setLink(g.url);
     setCat(g.categories?.[0] ?? "Acción");
     setCoverB64(""); // vacío = conservar la portada actual
@@ -449,8 +483,11 @@ export default function DevPanel() {
 
   const cancelEdit = useCallback(() => {
     setEditing(null);
+    setEditingOfficial(false);
     setName("");
+    setTagline("");
     setDesc("");
+    setLongDesc("");
     setLink("");
     setCat("Acción");
     setCoverB64("");
@@ -479,86 +516,136 @@ export default function DevPanel() {
       let url = link.trim();
       if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
 
-      let game: Game;
-      if (editing) {
-        // Edición: conserva id, portada (si no se cambia), rating, jugadores,
-        // dificultad y accent del juego original; solo reescribe lo editable.
-        game = {
-          ...editing,
-          title: name.trim(),
-          tagline: desc.trim().slice(0, 90),
-          description: desc.trim(),
-          longDescription: `${desc.trim()} Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.`,
-          url,
-          categories: [cat],
-          tags: Array.from(new Set([cat, ...(editing.tags ?? [])])),
-        };
-      } else {
-        const id = `${slugify(name)}-${Date.now().toString(36).slice(-4)}`;
-        game = {
-          id,
-          title: name.trim(),
-          tagline: desc.trim().slice(0, 90),
-          description: desc.trim(),
-          longDescription: `${desc.trim()} Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.`,
-          cover: `/games/community/${id}.jpg`,
-          url,
-          categories: [cat],
-          tags: [cat, "Comunidad"],
-          rating: Math.round((4.5 + Math.random() * 0.4) * 10) / 10,
-          players: "Nuevo",
-          difficulty: "Media",
-          accent: ACCENTS[Math.floor(Math.random() * ACCENTS.length)] ?? "#60a5fa",
-        };
-      }
-
       try {
-        setBusy(isEdit ? "Guardando cambios…" : "Publicando juego…");
-        const current = await readCatalog(t);
-        let next: Game[];
-        if (editing) {
-          const idx = current.list.findIndex((x) => x.id === game.id);
-          if (idx === -1) {
-            throw new Error("El juego ya no existe en el catálogo; refresca la lista.");
+        if (editing && editingOfficial) {
+          // ---- Edición de un juego OFICIAL: se guarda como edición aparte
+          // (override) sin tocar el código; "Restaurar" la elimina. ----
+          setBusy("Guardando cambios…");
+          const prev: GameOverride = overrides[editing.id] ?? {};
+          const entry: GameOverride = {
+            title: name.trim(),
+            tagline: tagline.trim() || desc.trim().slice(0, 90),
+            description: desc.trim(),
+            longDescription: longDesc.trim() || editing.longDescription,
+            url,
+            categories: [cat],
+            tags: Array.from(new Set([cat, ...(editing.tags ?? [])])),
+          };
+          if (coverB64) entry.cover = `/games/official/${editing.id}.jpg`;
+          else if (prev.cover) entry.cover = prev.cover;
+
+          const next: GameOverrides = { ...overrides, [editing.id]: entry };
+          const jsonB64 = utf8ToBase64(JSON.stringify(next, null, 2) + "\n");
+          const entries: TreeEntry[] = [
+            {
+              path: OVERRIDES_PATH,
+              mode: "100644",
+              type: "blob",
+              sha: await createBlob(t, jsonB64),
+            },
+          ];
+          if (coverB64) {
+            entries.push({
+              path: repoCoverPath(`/games/official/${editing.id}.jpg`),
+              mode: "100644",
+              type: "blob",
+              sha: await createBlob(t, coverB64),
+            });
           }
-          next = current.list.map((x) => (x.id === game.id ? game : x));
+          await commitFiles(t, `panel: editar oficial ${entry.title ?? editing.title}`, entries);
+          setOverrides(next);
+          setOk(
+            "¡Cambios guardados! El sitio se reconstruye solo en ~2 minutos. Si quieres volver al original, usa la flecha de restaurar de la lista."
+          );
         } else {
-          next = [...current.list, game];
-        }
-        const jsonB64 = utf8ToBase64(JSON.stringify(next, null, 2) + "\n");
+          // ---- Publicar nuevo juego o editar uno comunitario ----
+          let game: Game;
+          if (editing) {
+            // Edición: conserva id, portada (si no se cambia), rating, jugadores,
+            // dificultad y accent del juego original; solo reescribe lo editable.
+            game = {
+              ...editing,
+              title: name.trim(),
+              tagline: tagline.trim() || desc.trim().slice(0, 90),
+              description: desc.trim(),
+              longDescription:
+                longDesc.trim() ||
+                `${desc.trim()} Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.`,
+              url,
+              categories: [cat],
+              tags: Array.from(new Set([cat, ...(editing.tags ?? [])])),
+            };
+          } else {
+            const id = `${slugify(name)}-${Date.now().toString(36).slice(-4)}`;
+            game = {
+              id,
+              title: name.trim(),
+              tagline: tagline.trim() || desc.trim().slice(0, 90),
+              description: desc.trim(),
+              longDescription:
+                longDesc.trim() ||
+                `${desc.trim()} Un juego de la comunidad de axcgames: juega al instante en tu navegador, sin descargas.`,
+              cover: `/games/community/${id}.jpg`,
+              url,
+              categories: [cat],
+              tags: [cat, "Comunidad"],
+              rating: Math.round((4.5 + Math.random() * 0.4) * 10) / 10,
+              players: "Nuevo",
+              difficulty: "Media",
+              accent: ACCENTS[Math.floor(Math.random() * ACCENTS.length)] ?? "#60a5fa",
+            };
+          }
 
-        // Un único commit atómico: catálogo (+ portada nueva/substituida si toca)
-        // → un solo deploy de Pages.
-        const entries: TreeEntry[] = [
-          {
-            path: JSON_PATH,
-            mode: "100644",
-            type: "blob",
-            sha: await createBlob(t, jsonB64),
-          },
-        ];
-        if (coverB64) {
-          entries.push({
-            path: repoCoverPath(game.cover),
-            mode: "100644",
-            type: "blob",
-            sha: await createBlob(t, coverB64),
-          });
-        }
-        await commitFiles(
-          t,
-          isEdit ? `panel: editar ${game.title}` : `panel: añadir ${game.title}`,
-          entries
-        );
+          const current = await readCatalog(t);
+          let next: Game[];
+          if (editing) {
+            const idx = current.list.findIndex((x) => x.id === game.id);
+            if (idx === -1) {
+              throw new Error("El juego ya no existe en el catálogo; refresca la lista.");
+            }
+            next = current.list.map((x) => (x.id === game.id ? game : x));
+          } else {
+            next = [...current.list, game];
+          }
+          const jsonB64 = utf8ToBase64(JSON.stringify(next, null, 2) + "\n");
 
-        setOk(
-          isEdit
-            ? "¡Cambios guardados! El sitio se reconstruye solo en ~2 minutos y todos verán la actualización."
-            : "¡Juego publicado! El sitio se reconstruye solo en ~2 minutos. Refresca la página dentro de un rato y aparecerá para todos."
-        );
+          // Un único commit atómico: catálogo (+ portada nueva/substituida si toca)
+          // → un solo deploy de Pages.
+          const entries: TreeEntry[] = [
+            {
+              path: JSON_PATH,
+              mode: "100644",
+              type: "blob",
+              sha: await createBlob(t, jsonB64),
+            },
+          ];
+          if (coverB64) {
+            entries.push({
+              path: repoCoverPath(game.cover),
+              mode: "100644",
+              type: "blob",
+              sha: await createBlob(t, coverB64),
+            });
+          }
+          await commitFiles(
+            t,
+            editing ? `panel: editar ${game.title}` : `panel: añadir ${game.title}`,
+            entries
+          );
+
+          setOk(
+            isEdit
+              ? "¡Cambios guardados! El sitio se reconstruye solo en ~2 minutos y todos verán la actualización."
+              : "¡Juego publicado! El sitio se reconstruye solo en ~2 minutos. Refresca la página dentro de un rato y aparecerá para todos."
+          );
+        }
+
         setEditing(null);
+        setEditingOfficial(false);
         setName("");
+        setTagline("");
         setDesc("");
+        setLongDesc("");
         setLink("");
         setCoverB64("");
         setCat("Acción");
@@ -582,7 +669,19 @@ export default function DevPanel() {
         setBusy("");
       }
     },
-    [name, desc, link, cat, coverB64, editing, refreshList]
+    [
+      name,
+      desc,
+      link,
+      cat,
+      coverB64,
+      editing,
+      editingOfficial,
+      tagline,
+      longDesc,
+      overrides,
+      refreshList,
+    ]
   );
 
   /* Destacar juego (hero del sitio) ------------------------------------- */
@@ -677,6 +776,65 @@ export default function DevPanel() {
       } catch (err) {
         const ghErr = err as GhError;
         setError(ghErr.message || "No se pudo eliminar el juego.");
+      } finally {
+        setBusy("");
+      }
+    },
+    [refreshList]
+  );
+
+  /* Restaurar juego oficial a sus datos originales --------------------- */
+
+  const restoreOfficial = useCallback(
+    async (game: Game) => {
+      const t = localStorage.getItem(TOKEN_KEY) ?? "";
+      if (!t) return;
+      try {
+        setBusy("Restaurando original…");
+        const current = await readOverrides(t);
+        const entry = current[game.id];
+        const next: GameOverrides = { ...current };
+        delete next[game.id];
+        const jsonB64 = utf8ToBase64(JSON.stringify(next, null, 2) + "\n");
+        const entries: TreeEntry[] = [
+          {
+            path: OVERRIDES_PATH,
+            mode: "100644",
+            type: "blob",
+            sha: await createBlob(t, jsonB64),
+          },
+        ];
+        if (entry?.cover) {
+          // Borra también la portada subida para la edición
+          entries.push({
+            path: repoCoverPath(entry.cover),
+            mode: "100644",
+            type: "blob",
+            sha: null,
+          });
+        }
+        const jsonEntry = entries[0];
+        try {
+          await commitFiles(t, `panel: restaurar ${game.title}`, entries);
+        } catch {
+          // La portada quizá ya no existe en el repo: reintentar solo con el JSON
+          await commitFiles(t, `panel: restaurar ${game.title}`, jsonEntry ? [jsonEntry] : []);
+        }
+        setOverrides(next);
+        setOk(`"${game.title}" vuelve a mostrar sus datos originales.`);
+        void refreshList();
+      } catch (err) {
+        const ghErr = err as GhError;
+        if (ghErr.status === 401 || ghErr.status === 403) {
+          try {
+            localStorage.removeItem(TOKEN_KEY);
+          } catch {
+            /* ignorar */
+          }
+          setPhase("token");
+        } else {
+          setError(ghErr.message || "No se pudo restaurar el juego.");
+        }
       } finally {
         setBusy("");
       }
@@ -861,7 +1019,11 @@ export default function DevPanel() {
                 <form ref={formRef} onSubmit={submit} className="space-y-4">
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="font-display text-xs font-bold uppercase tracking-[0.25em] text-white/60">
-                      {editing ? "EDITAR JUEGO" : "PUBLICAR JUEGO NUEVO"}
+                      {editing
+                        ? editingOfficial
+                          ? "EDITAR JUEGO OFICIAL"
+                          : "EDITAR JUEGO PUBLICADO"
+                        : "PUBLICAR JUEGO NUEVO"}
                     </h3>
                     {editing && (
                       <button
@@ -877,8 +1039,10 @@ export default function DevPanel() {
                     <div className="flex items-center gap-2.5 rounded-xl border border-blue-400/25 bg-blue-400/10 px-4 py-3 text-sm text-blue-200">
                       <Pencil className="h-4 w-4 shrink-0" />
                       Editando
-                      <b className="truncate text-white">{editing.title}</b> —
-                      rating, jugadores y color se conservan.
+                      <b className="truncate text-white">{editing.title}</b> —{" "}
+                      {editingOfficial
+                        ? "juego oficial: los cambios se guardan aparte y puedes restaurar el original."
+                        : "rating, jugadores y color se conservan."}
                     </div>
                   )}
                   <div>
@@ -895,6 +1059,20 @@ export default function DevPanel() {
                   </div>
 
                   <div>
+                    <label htmlFor="dev-tagline" className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-white/50">
+                      Frase corta <span className="normal-case tracking-normal text-white/30">(opcional)</span>
+                    </label>
+                    <input
+                      id="dev-tagline"
+                      value={tagline}
+                      onChange={(e) => setTagline(e.target.value)}
+                      placeholder="Ej. Un reino perdido espera en el horizonte"
+                      maxLength={90}
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-blue-400/60 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
                     <label htmlFor="dev-desc" className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-white/50">
                       Descripción
                     </label>
@@ -906,6 +1084,23 @@ export default function DevPanel() {
                       rows={2}
                       className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-blue-400/60 focus:outline-none"
                     />
+                  </div>
+
+                  <div>
+                    <label htmlFor="dev-longdesc" className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-white/50">
+                      Descripción larga <span className="normal-case tracking-normal text-white/30">(opcional)</span>
+                    </label>
+                    <textarea
+                      id="dev-longdesc"
+                      value={longDesc}
+                      onChange={(e) => setLongDesc(e.target.value)}
+                      placeholder="Texto completo que se muestra al abrir el juego…"
+                      rows={3}
+                      className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-blue-400/60 focus:outline-none"
+                    />
+                    <p className="mt-1.5 text-xs text-white/35">
+                      Si la dejas vacía se conserva la actual del juego.
+                    </p>
                   </div>
 
                   <div>
@@ -1150,14 +1345,20 @@ export default function DevPanel() {
                   )}
                 </div>
 
-                {/* Juegos oficiales (destacables) */}
+                {/* Juegos oficiales (editables y destacables) */}
                 <div className="border-t border-white/10 pt-5">
-                  <h3 className="mb-3 font-display text-xs font-bold uppercase tracking-[0.25em] text-white/60">
+                  <h3 className="mb-1 font-display text-xs font-bold uppercase tracking-[0.25em] text-white/60">
                     JUEGOS OFICIALES ({officialGames.length})
                   </h3>
+                  <p className="mb-3 text-xs text-white/35">
+                    También se pueden editar y destacar; la flecha circular
+                    restaura los datos originales.
+                  </p>
                   <ul className="space-y-2">
-                    {officialGames.map((g) => {
+                    {officialGames.map((raw) => {
+                      const g = applyOverride(raw, overrides);
                       const isFeatured = featuredId === g.id;
+                      const edited = Boolean(overrides[g.id]);
                       return (
                         <li
                           key={g.id}
@@ -1169,12 +1370,23 @@ export default function DevPanel() {
                           }
                         >
                           <img
-                            src={asset(g.cover)}
+                            src={
+                              edited && overrides[g.id]?.cover
+                                ? `${RAW_ROOT}${g.cover}?t=${Date.now()}`
+                                : asset(raw.cover)
+                            }
                             alt=""
                             className="h-10 w-16 shrink-0 rounded-md object-cover"
                           />
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-bold text-white">{g.title}</p>
+                            <p className="flex items-center gap-2 truncate text-sm font-bold text-white">
+                              <span className="truncate">{g.title}</span>
+                              {edited && (
+                                <span className="shrink-0 rounded-full border border-amber-400/40 bg-amber-400/10 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-widest text-amber-300">
+                                  Editado
+                                </span>
+                              )}
+                            </p>
                             <p className="truncate text-xs text-white/40">
                               {g.categories?.[0] ?? "—"} · oficial
                             </p>
@@ -1201,6 +1413,28 @@ export default function DevPanel() {
                               fill={isFeatured ? "currentColor" : "none"}
                             />
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => startEdit(g, true)}
+                            disabled={Boolean(busy)}
+                            aria-label={`Editar ${g.title}`}
+                            title="Editar juego oficial"
+                            className="rounded-full border border-white/10 p-2 text-white/45 transition hover:border-white/30 hover:text-white active:scale-95 disabled:opacity-50"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          {edited && (
+                            <button
+                              type="button"
+                              onClick={() => void restoreOfficial(g)}
+                              disabled={Boolean(busy)}
+                              aria-label={`Restaurar ${g.title} al original`}
+                              title="Restaurar datos originales"
+                              className="rounded-full border border-white/10 p-2 text-white/45 transition hover:border-amber-400/50 hover:text-amber-300 active:scale-95 disabled:opacity-50"
+                            >
+                              <Undo2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </li>
                       );
                     })}
@@ -1211,7 +1445,8 @@ export default function DevPanel() {
                   <Send className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   Cada cambio se guarda en el repositorio y GitHub Pages reconstruye el
                   sitio en ~2 minutos; después todos los visitantes lo ven. El juego con la
-                  estrella aparece en el hero de la portada.
+                  estrella aparece en el hero de la portada —oficial o subido— y el
+                  lápiz edita cualquier juego.
                 </p>
                   </>
                 )}
