@@ -31,7 +31,11 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
     const finish = () => {
       setDone(true);
       onDone();
-      window.setTimeout(() => setHidden(true), 950);
+      window.setTimeout(() => {
+        setHidden(true);
+        // liberar el scroll del body justo cuando el overlay desaparece del DOM
+        document.body.classList.remove("noscroll");
+      }, 950);
     };
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       finish();
