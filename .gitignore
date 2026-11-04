@@ -69,3 +69,4 @@ tool-results/
 # archivos internos del entorno (no van al repo)
 .db-prefix
 .zscripts/dev.pid
+upload/
