@@ -458,5 +458,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#22c55e"
+  },
+  {
+    "id": "call-of-duty-lpoc",
+    "title": "Call Of Duty",
+    "tagline": "COD",
+    "description": "call of duty",
+    "longDescription": "accion y disparos",
+    "cover": "/games/community/call-of-duty-lpoc.jpg",
+    "url": "https://axcgamestudios.github.io/cod1/",
+    "categories": [
+      "Acción"
+    ],
+    "tags": [
+      "Acción",
+      "Comunidad"
+    ],
+    "rating": 4.6,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#38bdf8"
   }
 ]
