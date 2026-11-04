@@ -438,5 +438,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#f97316"
+  },
+  {
+    "id": "spider-man-kbkl",
+    "title": "Spider-man",
+    "tagline": "Spiderman",
+    "description": "Spiderman",
+    "longDescription": "juego mundo abierto",
+    "cover": "/games/community/spider-man-kbkl.jpg",
+    "url": "https://axcgamestudios.github.io/SpiderMan/",
+    "categories": [
+      "Acción"
+    ],
+    "tags": [
+      "Acción",
+      "Comunidad"
+    ],
+    "rating": 4.8,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#22c55e"
   }
 ]
