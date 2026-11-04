@@ -1,0 +1,19 @@
+{
+  "name": "axcGames — Web Game Studio",
+  "short_name": "axcGames",
+  "description": "Estudio de juegos web independiente: tienda con juegos gratis que corren en tu navegador. Una cuenta para todo el universo axc.",
+  "id": "axcgames-main",
+  "start_url": "./?src=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "lang": "es",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "axc/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "axc/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "axc/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Chakra_Petch, Geist_Mono, Space_Grotesk } from "next/font/google";
+import { Geist_Mono, Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -9,13 +9,12 @@ const spaceGrotesk = Space_Grotesk({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-// Display tech/gaming: cuadrada, muy legible y profesional — combina con
-// el tema azul/negro del sitio sin sacrificar la lectura (sustituye a
-// Unbounded, demasiado ancha y difícil de leer en títulos largos).
-const chakraPetch = Chakra_Petch({
-  variable: "--font-chakra-petch",
+// Tipografía del diseño axcStudios: Space Grotesk (display) + Inter (cuerpo)
+// — legible, profesional y coherente con la identidad web del estudio.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
 });
 
 const geistMono = Geist_Mono({
@@ -27,9 +26,9 @@ const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://axcgamestudios.github.io/nueva-pestana"),
-  title: "nueva-pestaña",
+  title: "axcGames — Juega sin límites",
   description:
-    "Tu página de inicio: juegos, chat y amigos. Kingdom of the Forgotten Seas, Velocity GP, Emergency Strike, Apex Kart, Zona Cero, Minecraft y Grand Theft Voxel. Sin descargas, juega al instante en tu navegador.",
+    "Estudio de juegos web independiente: Kingdom of the Forgotten Seas, Velocity GP, Emergency Strike, Apex Kart, Zona Cero, Minecraft, Grand Theft Voxel y toda la saga FNAF. Sin descargas, juega al instante en tu navegador con una sola cuenta axc.",
   keywords: [
     "juegos",
     "juegos gratis",
@@ -38,26 +37,27 @@ export const metadata: Metadata = {
     "Emergency Strike",
     "Apex Kart",
     "Zona Cero",
-    "Jeffcraft",
     "Minecraft",
+    "FNAF",
   ],
-  authors: [{ name: "nueva-pestaña" }],
+  authors: [{ name: "axcGames" }],
+  manifest: `${BP}/manifest.webmanifest`,
   icons: {
-    icon: [{ url: `${BP}/icon.png`, type: "image/png", sizes: "512x512" }],
-    apple: [{ url: `${BP}/apple-icon.png`, type: "image/png", sizes: "180x180" }],
+    icon: [{ url: `${BP}/axc/icon-192.png`, type: "image/png", sizes: "192x192" }],
+    apple: [{ url: `${BP}/axc/icon-192.png`, type: "image/png" }],
   },
   openGraph: {
-    title: "nueva-pestaña",
+    title: "axcGames — Juega sin límites",
     description:
-      "Tu portal premium: Velocity GP, Emergency Strike, Apex Kart, Zona Cero y Minecraft. Juega sin descargas.",
-    siteName: "nueva-pestaña",
+      "Tu portal premium: Kingdom of the Forgotten Seas, Velocity GP, Zona Cero, Minecraft y la saga FNAF completa. Juega sin descargas.",
+    siteName: "axcGames",
     type: "website",
-    images: [{ url: `${BP}/logo-full.png`, width: 1024, height: 1024 }],
+    images: [{ url: `${BP}/axc/icon-512.png`, width: 512, height: 512 }],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#0a0a0a",
 };
 
 export default function RootLayout({
@@ -68,7 +68,7 @@ export default function RootLayout({
   return (
     <html lang="es" className="dark" suppressHydrationWarning>
       <body
-        className={`${spaceGrotesk.variable} ${geistMono.variable} ${chakraPetch.variable} antialiased bg-black text-white`}
+        className={`${spaceGrotesk.variable} ${inter.variable} ${geistMono.variable} antialiased`}
       >
         {children}
         <Toaster />

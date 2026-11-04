@@ -15,12 +15,8 @@
 
 import { create } from "zustand";
 import type { Game } from "@/lib/games";
-import {
-  getSessionUser,
-  loginAccount,
-  registerAccount,
-  setSession,
-} from "./accounts";
+import { loadAccounts } from "./accounts";
+import { AXC, axcInit, getAxcSnapshot, type AxcUser } from "./axc-auth";
 import {
   LOBBY_ROOM,
   p2p,
@@ -35,7 +31,7 @@ import {
   type CloudInboxItem,
 } from "./cloud-db";
 
-export type View = "home" | "game" | "chat" | "auth";
+export type View = "home" | "game" | "chat";
 
 export interface AxUser {
   id: string;
@@ -115,18 +111,19 @@ interface AxState {
 
   setMe: (me: AxUser | null) => void;
   fetchMe: () => Promise<void>;
-  login: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-  register: (
-    username: string,
-    password: string,
-    displayName: string
-  ) => Promise<{ ok: boolean; error?: string }>;
+  /** Modal de cuentas liquid-glass (sistema SSO axc) abierto sobre la vista actual. */
+  authOpen: boolean;
+  /** Contexto del modal: a dónde volver tras iniciar sesión. */
+  authContext: "play" | "chat" | "store" | null;
+  /** Pestaña inicial del modal: entrar o crear cuenta. */
+  authTab: "login" | "signup";
+  closeAuth: () => void;
   logout: () => Promise<void>;
 
   goHome: () => void;
   openGame: (game: Game) => void;
   openChat: () => void;
-  openAuth: () => void;
+  openAuth: (context?: "play" | "chat" | "store", tab?: "login" | "signup") => void;
 
   connect: () => void;
 
@@ -165,6 +162,32 @@ interface AxState {
 // ---------------------------------------------------------------------------
 
 let currentUid: string | null = null;
+
+/**
+ * Convierte la sesión del SSO axc (usuario + correo) en la identidad AxUser
+ * que usan el chat, el tiempo de juego y la nube. Si ya existía una cuenta
+ * local con el mismo nombre de usuario, se reutiliza SU AxUser (mismo id,
+ * avatar y datos de chat); si no, se deriva uno determinista del nombre.
+ */
+function axcToAxUser(sess: AxcUser): AxUser {
+  const old = loadAccounts()[sess.u];
+  if (old?.user) return old.user;
+  const colors = [
+    "#3b82f6", "#ef4444", "#10b981", "#06b6d4", "#8b5cf6", "#ec4899",
+    "#84cc16", "#f97316", "#22d3ee", "#a3e635", "#fb7185", "#38bdf8",
+  ];
+  let h = 5381;
+  for (let i = 0; i < sess.u.length; i++) h = ((h * 33) ^ sess.u.charCodeAt(i)) >>> 0;
+  const id = "axc-" + h.toString(16).padStart(8, "0") + "-" + sess.u.replace(/[^a-z0-9_]/g, "");
+  return {
+    id,
+    username: sess.u,
+    displayName: sess.u,
+    avatarColor: colors[h % colors.length],
+    bio: "",
+    createdAt: new Date().toISOString(),
+  };
+}
 
 function k(name: string): string {
   return `axcg:${name}:${currentUid ?? "anon"}`;
@@ -611,12 +634,21 @@ export const useAxStore = create<AxState>((set, get) => ({
 
   setMe: (me) => set({ me, meLoaded: true }),
 
+  authOpen: false,
+  authContext: null,
+  authTab: "login",
+
+  closeAuth: () => set({ authOpen: false, authContext: null }),
+
   fetchMe: async () => {
-    const user = getSessionUser();
-    if (!user) {
+    // Sesión del SSO axc (textdb.dev, compartida con axcStudios)
+    await axcInit();
+    const sess = getAxcSnapshot().user;
+    if (!sess) {
       set({ me: null, meLoaded: true });
       return;
     }
+    const user = axcToAxUser(sess);
     currentUid = user.id;
     set({
       me: user,
@@ -632,45 +664,7 @@ export const useAxStore = create<AxState>((set, get) => ({
     for (const c of get().conversations) p2p.joinRoom(c.id);
   },
 
-  login: async (username, password) => {
-    const res = await loginAccount(username, password);
-    if (!res.ok || !res.user) return { ok: false, error: res.error };
-    currentUid = res.user.id;
-    set({
-      me: res.user,
-      meLoaded: true,
-      friends: read(k("friends"), [] as AxUser[]),
-      incoming: read(k("freqin"), [] as FriendRequest[]),
-      outgoing: read(k("freqout"), [] as FriendRequest[]),
-      conversations: sortConvs(read(k("convs"), [] as AxConversation[])),
-      onlineIds: new Set<string>(),
-      onlineUsersList: [],
-    });
-    get().connect();
-    for (const c of get().conversations) p2p.joinRoom(c.id);
-    return { ok: true };
-  },
-
-  register: async (username, password, displayName) => {
-    const res = await registerAccount(username, password, displayName);
-    if (!res.ok || !res.user) return { ok: false, error: res.error };
-    currentUid = res.user.id;
-    set({
-      me: res.user,
-      meLoaded: true,
-      friends: [],
-      incoming: [],
-      outgoing: [],
-      conversations: [],
-      onlineIds: new Set<string>(),
-      onlineUsersList: [],
-    });
-    get().connect();
-    return { ok: true };
-  },
-
   logout: async () => {
-    setSession(null);
     p2p.stop();
     stopInboxPolling();
     currentUid = null;
@@ -692,6 +686,9 @@ export const useAxStore = create<AxState>((set, get) => ({
       callPeerStates: {},
       socketConnected: false,
     });
+    // Cierra también la sesión del SSO axc (último para que el evento
+    // 'auth' null encuentre el store ya sin sesión y no reentre).
+    AXC.logout();
   },
 
   goHome: () => {
@@ -709,8 +706,8 @@ export const useAxStore = create<AxState>((set, get) => ({
   openChat: () => {
     const { me } = get();
     if (!me) {
-      set({ view: "auth" });
-      window.scrollTo({ top: 0, behavior: "auto" });
+      // Sin sesión: abrir el modal de cuentas axc y recordar que veníamos del chat
+      set({ authOpen: true, authContext: "chat" });
       return;
     }
     set({ view: "chat" });
@@ -719,9 +716,8 @@ export const useAxStore = create<AxState>((set, get) => ({
     void get().loadFriends();
   },
 
-  openAuth: () => {
-    set({ view: "auth" });
-    window.scrollTo({ top: 0, behavior: "auto" });
+  openAuth: (context, tab) => {
+    set({ authOpen: true, authContext: context ?? null, authTab: tab ?? "login" });
   },
 
   connect: () => {
