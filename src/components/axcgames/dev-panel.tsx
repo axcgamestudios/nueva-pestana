@@ -32,14 +32,12 @@ import {
 import { allCategories, games as officialGames, type Game } from "@/lib/games";
 import { applyOverride, type GameOverride, type GameOverrides } from "@/lib/official-overrides";
 import { asset } from "@/lib/paths";
-import DevPanelPlaytime from "./dev-panel-playtime";
 
 /* ------------------------------------------------------------------ */
 /* Configuración                                                       */
 /* ------------------------------------------------------------------ */
 
 const REPO = "axcgamestudios/nueva-pestana";
-export const PT_JSON_PATH = "public/data/playtime-config.json";
 const API_ROOT = "https://api.github.com";
 const JSON_PATH = "public/data/community-games.json";
 const SITE_CONFIG_PATH = "public/data/site-config.json";
@@ -56,7 +54,7 @@ const COVER_H = 768;
 const ACCENTS = ["#f97316", "#22c55e", "#38bdf8", "#a78bfa", "#ec4899", "#eab308"];
 
 type Phase = "closed" | "password" | "token" | "ready";
-type PanelTab = "juegos" | "stats" | "limits";
+type PanelTab = "juegos";
 
 /* ------------------------------------------------------------------ */
 /* Utilidades                                                          */
@@ -990,8 +988,6 @@ export default function DevPanel() {
                 <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Secciones del panel">
                   {([
                     ["juegos", "Juegos"],
-                    ["stats", "Estadísticas"],
-                    ["limits", "Límites de tiempo"],
                   ] as const).map(([id, label]) => (
                     <button
                       key={id}
@@ -1009,9 +1005,6 @@ export default function DevPanel() {
                     </button>
                   ))}
                 </div>
-
-                {tab === "stats" && <DevPanelPlaytime mode="stats" />}
-                {tab === "limits" && <DevPanelPlaytime mode="limits" />}
 
                 {tab === "juegos" && (
                   <>

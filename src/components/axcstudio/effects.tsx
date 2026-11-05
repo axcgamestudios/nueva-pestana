@@ -9,7 +9,7 @@
  * 2. REVEAL — IntersectionObserver que hace aparecer (.in) los .reveal al
  *    entrar en pantalla; re-escanea cuando cambian las vistas/dependencias.
  * 3. Servicio Worker (producción) para la instalación PWA opcional.
- * 4. Puente de sesión SSO axc → store del sitio (chat, playtime, panel).
+ * 4. Puente de sesión SSO axc → store del sitio (chat, panel).
  */
 import { useEffect } from "react";
 import { onAxc } from "@/lib/axc-auth";
@@ -76,7 +76,7 @@ export function useServiceWorker() {
 
 /**
  * Puente AXC → store: inicia el SSO una vez y sincroniza la identidad del
- * chat/playtime con la sesión axc. Con sesión nueva (login/registro/verifi-
+ * chat con la sesión axc. Con sesión nueva (login/registro/verifi-
  * cación) recarga el perfil; al cerrar sesión limpia el estado del sitio.
  */
 export function AxcSessionBridge() {

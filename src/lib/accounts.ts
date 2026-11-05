@@ -14,15 +14,12 @@ import type { AxUser } from "./store";
 import {
   bindDeviceIfFree,
   claimDevice,
-  fetchCloudStats,
   fetchRegistry,
   getCachedRegistry,
-  pushCloudStats,
   registerCloudAccount,
   type CloudAccount,
   type CloudRegistry,
 } from "./cloud-db";
-import { readOwn } from "./playtime";
 
 const ACCOUNTS_KEY = "axcg:accounts";
 const SESSION_KEY = "axcg:session";
@@ -268,19 +265,6 @@ export async function loginAccount(
       };
       accounts[clean] = account;
       saveAccounts(accounts);
-      // Traer sus estadísticas de la nube a este navegador (continúa donde
-      // lo dejó si ya jugó en otro dispositivo)
-      try {
-        const remoteStats = await fetchCloudStats(remote.id);
-        if (remoteStats && !readOwn(remote.id).updatedAt) {
-          localStorage.setItem(
-            `axcgames:playtime:${remote.id}`,
-            JSON.stringify(remoteStats),
-          );
-        }
-      } catch {
-        /* sin nube: estadísticas locales vacías */
-      }
       setSession(clean);
       // Ocupar el vínculo de dispositivo si está libre (para que no se
       // puedan crear cuentas nuevas aquí después de entrar con una ajena).
@@ -298,18 +282,13 @@ export async function loginAccount(
   // Ocupar el vínculo de dispositivo si está libre (si este navegador
   // nunca creó una cuenta, queda reservado para esta con la que entra).
   void bindDeviceIfFree(getDeviceId(), { userId: account.user.id, username: clean });
-  // Al entrar, subir los datos de juego actuales a la nube (por si hubo
-  // partidas sin sincronizar) y traer la cuenta al día.
-  const user = account.user;
-  void pushCloudStats(user.id, readOwn(user.id), { force: true });
-  return { ok: true, user };
+  return { ok: true, user: account.user };
 }
 
 /**
  * Migra una cuenta local a la base de datos compartida: registra sus
- * credenciales (para poder entrar desde cualquier dispositivo) y sube
- * las estadísticas de juego acumuladas. No pide contraseña: la sesión
- * local ya autentica al dueño de la cuenta.
+ * credenciales para poder entrar desde cualquier dispositivo. No pide
+ * contraseña: la sesión local ya autentica al dueño de la cuenta.
  */
 export async function migrateAccountToCloud(
   username: string,
@@ -332,8 +311,6 @@ export async function migrateAccountToCloud(
   };
   const res = await registerCloudAccount(entry);
   if (!res.ok) return res;
-  // Subir también las estadísticas acumuladas de este navegador
-  await pushCloudStats(user.id, readOwn(user.id), { force: true });
   const accounts = loadAccounts();
   if (accounts[clean]) {
     accounts[clean].cloudSyncedAt = Date.now();
@@ -341,33 +318,4 @@ export async function migrateAccountToCloud(
   }
   announceCloudSync();
   return { ok: true };
-}
-
-/**
- * ¿Puede este usuario jugar? Solo si su cuenta está registrada en la
- * base de datos compartida (obligatorio para que su tiempo de juego
- * quede registrado para el panel de administración).
- *
- * - Consulta la caché del registro (instantáneo) y luego la nube.
- * - Si la nube no responde, deja jugar solo a cuentas que ya se
- *   migraron antes desde este navegador (cloudSyncedAt).
- */
-export async function isAccountCloudReady(username: string): Promise<boolean> {
-  const clean = username.trim().toLowerCase();
-  if (!clean) return false;
-  const cached = getCachedRegistry();
-  if (cached?.users[clean]) return true;
-  let remote: CloudRegistry | null = null;
-  try {
-    remote = await fetchRegistry(6000);
-  } catch {
-    remote = null;
-  }
-  if (remote) return Boolean(remote.users[clean]);
-  // Nube inalcanzable: confiar en la última sincronización local
-  try {
-    return Boolean(loadAccounts()[clean]?.cloudSyncedAt);
-  } catch {
-    return false;
-  }
 }

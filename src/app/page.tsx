@@ -7,8 +7,6 @@ import { fetchCommunityGames } from "@/lib/community-games";
 import { fetchOfficialOverrides, applyOverride, type GameOverrides } from "@/lib/official-overrides";
 import { fetchSiteConfig } from "@/lib/site-config";
 import { useAxStore } from "@/lib/store";
-import { evaluateLimit, loadPlaytimeConfig, readOwn } from "@/lib/playtime";
-import { pushCloudStats } from "@/lib/cloud-db";
 import ChatApp from "@/components/axcgames/chat/chat-app";
 import CallLayer from "@/components/axcgames/chat/call-overlay";
 import DevPanel from "@/components/axcgames/dev-panel";
@@ -23,7 +21,7 @@ import StoreView from "@/components/axcstudio/store-view";
 import Player from "@/components/axcstudio/player";
 import AuthModal from "@/components/axcstudio/auth-modal";
 import FooterAxc from "@/components/axcstudio/footer-axc";
-import AxcToastPort, { axcToast } from "@/components/axcstudio/axc-toast";
+import AxcToastPort from "@/components/axcstudio/axc-toast";
 import { InstallModal, useInstall } from "@/components/axcstudio/install";
 import {
   AxcSessionBridge,
@@ -162,22 +160,8 @@ export default function Home() {
     if (me) connect();
   }, [me, connect]);
 
-  // Sincronización del tiempo de juego con la nube al entrar/salir
-  useEffect(() => {
-    if (!me) return;
-    void pushCloudStats(me.id, readOwn(me.id), { force: true }).catch(() => undefined);
-    const onHide = () => {
-      void pushCloudStats(me.id, readOwn(me.id), { force: true, keepalive: true }).catch(
-        () => undefined,
-      );
-    };
-    window.addEventListener("pagehide", onHide);
-    return () => window.removeEventListener("pagehide", onHide);
-  }, [me?.id]);
-
   /* ---------- reproductor (overlay) ---------- */
   const [playing, setPlaying] = useState<{ game: Game; from: HTMLElement | null } | null>(null);
-  const limitChecked = useRef<string>("");
 
   const handlePlay = useCallback(
     (game: Game, from: HTMLElement | null) => {
@@ -188,39 +172,16 @@ export default function Home() {
         useAxStore.getState().openAuth("play");
         return;
       }
-      // límite semanal agotado (check rápido antes de lanzar)
-      if (limitChecked.current === game.id) {
-        setPlaying({ game, from });
-        return;
-      }
-      limitChecked.current = game.id;
-      void loadPlaytimeConfig()
-        .then((cfg) => {
-          const limit = evaluateLimit(cfg, meNow.id, readOwn(meNow.id));
-          if (limit.active && limit.remainingMin !== null && limit.remainingMin <= 0) {
-            axcToast("⏳ Se acabó tu tiempo de juego semanal. ¡Vuelve el lunes!");
-            limitChecked.current = "";
-            return;
-          }
-          setPlaying({ game, from });
-          setRecent((prev) => {
-            const next = [game.id, ...prev.filter((r) => r !== game.id)].slice(0, 4);
-            try {
-              localStorage.setItem(RECENT_KEY, JSON.stringify(next));
-            } catch {
-              /* ignorar */
-            }
-            return next;
-          });
-        })
-        .catch(() => {
-          setPlaying({ game, from });
-        })
-        .finally(() => {
-          window.setTimeout(() => {
-            limitChecked.current = "";
-          }, 4000);
-        });
+      setPlaying({ game, from });
+      setRecent((prev) => {
+        const next = [game.id, ...prev.filter((r) => r !== game.id)].slice(0, 4);
+        try {
+          localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+        } catch {
+          /* ignorar */
+        }
+        return next;
+      });
     },
     [],
   );
@@ -265,7 +226,7 @@ export default function Home() {
       {/* Preloader de motion graphics (una vez por carga) */}
       <Preloader onDone={() => undefined} />
 
-      {/* Puente de sesión SSO axc ↔ chat/playtime */}
+      {/* Puente de sesión SSO axc ↔ chat */}
       <AxcSessionBridge />
 
       {/* Notificaciones del chat activas en TODAS las vistas */}

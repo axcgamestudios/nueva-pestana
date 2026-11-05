@@ -2290,20 +2290,6 @@ footer nav a:hover {
   color: #38e8ff;
   white-space: nowrap;
 }
-.axcplay-remaining {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 11px;
-  border: 1px solid rgba(56, 232, 255, 0.3);
-  background: rgba(56, 232, 255, 0.08);
-  color: #9fe8ff;
-  font-family: var(--axc-font-display);
-  font-size: 0.76rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
 .axcplay-act {
   display: flex;
   align-items: center;
@@ -2526,34 +2512,7 @@ footer nav a:hover {
     0 0 70px rgba(46, 124, 246, 0.5);
   transition: all 0.72s cubic-bezier(0.16, 1, 0.3, 1);
 }
-/* límite de tiempo agotado */
-.axcplay-blocked {
-  position: absolute;
-  inset: 0;
-  z-index: 40;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  text-align: center;
-  padding: 30px;
-  background: radial-gradient(70% 60% at 50% 35%, rgba(46, 124, 246, 0.14), rgba(4, 5, 12, 0.92) 78%);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-.axcplay-blocked-icon {
-  font-size: 3rem;
-  animation: floatCard 3.5s ease-in-out infinite;
-}
-.axcplay-blocked h3 {
-  font-size: clamp(1.3rem, 2.6vw, 1.8rem);
-}
-.axcplay-blocked p {
-  color: var(--axc-text-secondary);
-  max-width: 420px;
-  line-height: 1.7;
-}
+
 @media (max-width: 520px) {
   .axcui-otp input {
     width: 40px;

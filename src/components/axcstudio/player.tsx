@@ -4,28 +4,11 @@
  * REPRODUCTOR EN PÁGINA del diseño axcStudios: los juegos corren DENTRO de
  * la página, a pantalla completa, con animación FLIP desde la tarjeta y
  * pantalla de carga con motion graphics (partículas, anillos, portada,
- * progreso y mensajes rotativos). Integra el registro de tiempo de juego
- * y los límites semanales del panel.
+ * progreso y mensajes rotativos).
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Hourglass } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Game } from "@/lib/games";
 import { asset } from "@/lib/paths";
-import { useAxStore } from "@/lib/store";
-import {
-  evaluateLimit,
-  formatMinutes,
-  idleTimeoutMs,
-  loadPlaytimeConfig,
-  readOwn,
-  recordPlaytime,
-  subscribePlaytime,
-  type LimitState,
-  type PlaytimeConfig,
-} from "@/lib/playtime";
-import { axcToast } from "./axc-toast";
-
-const TRACK_TICK_MS = 15000;
 
 const LOAD_MSGS = [
   "Despertando el motor del juego",
@@ -50,40 +33,11 @@ export default function Player({
   from: HTMLElement | null;
   onClose: () => void;
 }) {
-  const me = useAxStore((s) => s.me);
   const [ready, setReady] = useState(false);
   const [msgIdx, setMsgIdx] = useState(0);
   const [pct, setPct] = useState(4);
   const heroRef = useRef<HTMLDivElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
-
-  /* ---------- tiempo de juego: config + límites ---------- */
-  const [config, setConfig] = useState<PlaytimeConfig | null>(null);
-  const [, setTick] = useState(0);
-  useEffect(() => subscribePlaytime(() => setTick((v) => v + 1)), []);
-  useEffect(() => {
-    let alive = true;
-    const load = () => {
-      void loadPlaytimeConfig().then((cfg) => {
-        if (alive) setConfig(cfg);
-      });
-    };
-    load();
-    const id = window.setInterval(load, 60_000);
-    return () => {
-      alive = false;
-      window.clearInterval(id);
-    };
-  }, []);
-  const ownData = me ? readOwn(me.id) : null;
-  // Derivado en cada render de los datos vivos (localStorage + config): se
-  // reevalúa al registrarse tiempo (subscribePlaytime → setTick) y con config nueva.
-  const limit: LimitState | null =
-    me && config ? evaluateLimit(config, me.id, ownData ?? { days: {}, updatedAt: 0 }) : null;
-  const blocked =
-    limit !== null && limit.active && limit.remainingMin !== null && limit.remainingMin <= 0;
-  usePlaytimeWarnings(limit);
 
   /* ---------- mensajes rotativos + progreso ---------- */
   useEffect(() => {
@@ -183,60 +137,7 @@ export default function Player({
     else void st.requestFullscreen?.().catch(() => undefined);
   }, []);
 
-  /* ---------- registro de tiempo jugado (visible + activo) ---------- */
-  const idleMs = useMemo(() => idleTimeoutMs(config), [config]);
-  useEffect(() => {
-    if (!me) return;
-    let lastTick = Date.now();
-    let lastActivity = Date.now();
-    const touch = () => {
-      lastActivity = Date.now();
-    };
-    const EVENTS = ["pointermove", "pointerdown", "keydown", "wheel", "touchstart"] as const;
-    for (const ev of EVENTS) document.addEventListener(ev, touch, { passive: true, capture: true });
-    let frameDoc: Document | null = null;
-    const attachFrame = () => {
-      try {
-        const doc = iframeRef.current?.contentDocument;
-        if (!doc || doc === frameDoc) return;
-        for (const ev of EVENTS) doc.addEventListener(ev, touch, { passive: true, capture: true });
-        frameDoc = doc;
-      } catch {
-        /* juego cross-origin: interior no observable */
-      }
-    };
-    attachFrame();
-    const tick = () => {
-      const now = Date.now();
-      const delta = (now - lastTick) / 1000;
-      lastTick = now;
-      if (document.hidden) return;
-      if (delta <= 0 || delta > 60) return;
-      if (idleMs > 0 && now - lastActivity >= idleMs) return; // ausente: pausa
-      if (blocked) return; // límite agotado: no seguir contando
-      recordPlaytime(me.id, game.id, delta);
-    };
-    const onVis = () => {
-      lastTick = Date.now();
-      lastActivity = Date.now();
-    };
-    const id = window.setInterval(tick, TRACK_TICK_MS);
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      window.clearInterval(id);
-      document.removeEventListener("visibilitychange", onVis);
-      for (const ev of EVENTS) document.removeEventListener(ev, touch, true);
-      try {
-        if (frameDoc) for (const ev of EVENTS) frameDoc.removeEventListener(ev, touch, true);
-      } catch {
-        /* el documento interno ya no existe */
-      }
-    };
-  }, [me?.id, game.id, idleMs, blocked, ready]);
-
   const genre = game.categories.slice(0, 2).join(" · ") || "Comunidad";
-  const remaining =
-    limit?.active && limit.remainingMin !== null ? formatMinutes(limit.remainingMin) : null;
 
   return (
     <div
@@ -254,14 +155,6 @@ export default function Player({
           <b>{game.title}</b>
           <span>{genre}</span>
         </div>
-        {remaining && (
-          <span
-            className="axcplay-remaining"
-            title="Tiempo de juego restante hoy (límite del estudio)"
-          >
-            <Hourglass size={13} /> {remaining}
-          </span>
-        )}
         <button
           className="axcplay-act glow"
           title="Pantalla completa"
@@ -307,40 +200,12 @@ export default function Player({
           </div>
         </div>
         <iframe
-          ref={iframeRef}
           src={game.url}
           title={game.title}
           onLoad={onFrameLoad}
           allow="autoplay; fullscreen; gamepad; clipboard-read; clipboard-write; microphone"
         />
-        {blocked && (
-          <div className="axcplay-blocked">
-            <div className="axcplay-blocked-icon">⏳</div>
-            <h3>Se acabó tu tiempo de juego</h3>
-            <p>
-              Alcanzaste tu tope semanal. Vuelve el lunes para seguir jugando, o pide minutos
-              extra al estudio desde el panel.
-            </p>
-            <button className="btn btn-primary glow" onClick={onClose}>
-              ← Volver a la tienda
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
-}
-
-
-/* aviso único al acercarse al límite (15 y 5 minutos) */
-export function usePlaytimeWarnings(limit: LimitState | null) {
-  const warned = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    if (!limit?.active || limit.remainingMin === null) return;
-    const key = limit.remainingMin <= 15 ? "15" : limit.remainingMin <= 5 ? "5" : "";
-    if (key && !warned.current.has(key)) {
-      warned.current.add(key);
-      axcToast(`⏳ Te quedan ${formatMinutes(limit.remainingMin)} de juego`);
-    }
-  }, [limit?.remainingMin, limit?.active]);
 }

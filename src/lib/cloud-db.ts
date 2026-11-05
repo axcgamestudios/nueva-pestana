@@ -15,17 +15,15 @@
  *
  * Claves (con prefijo aleatorio para que no sean adivinables):
  *   <prefix>-registry  → { v, users: { username: cuenta }, devices: { deviceId: vinculo } }
- *   <prefix>-u-<uid>   → datos de juego (PlaytimeData) de cada jugador
+ *   <prefix>-inbox-<uid> → bandeja de entrega offline de cada usuario
  *
  * - REGISTRO: al crear una cuenta se escribe aquí (usuario, hash PBKDF2,
  *   color, etc.). Permite iniciar sesión desde cualquier dispositivo y
  *   da visibilidad total al panel de administración.
- * - ESTADÍSTICAS: cada navegador sube sus datos de juego con moderación
- *   (máx. 1 escritura cada 5 min mientras juega + al cerrar la pestaña).
+ * - BANDEJA: entrega diferida de solicitudes de amistad, mensajes y
+ *   invitaciones a grupos para usuarios que no están conectados.
  * - Sin dependencias externas: fetch + text/plain (sin preflight CORS).
  */
-
-import type { PlaytimeData } from "./playtime";
 
 /* ------------------------------------------------------------------ */
 /* Configuración                                                       */
@@ -41,8 +39,6 @@ const SNAPSHOT_CACHE = "axcgames:cloud-snapshot";
 
 /** Antigüedad máxima de la caché local del panel (30 s). */
 export const SNAPSHOT_TTL_MS = 30_000;
-/** Intervalo mínimo entre subidas de estadísticas por usuario. */
-export const PUSH_MIN_INTERVAL_MS = 5 * 60_000;
 
 /* ------------------------------------------------------------------ */
 /* Tipos                                                               */
@@ -77,11 +73,10 @@ export interface CloudRegistry {
   devices?: Record<string, CloudDeviceBinding>;
 }
 
-/** Instantánea para el panel: cuentas + datos de juego de cada una. */
+/** Instantánea para el panel: cuentas registradas en la nube. */
 export interface CloudSnapshot {
   fetchedAt: number;
   accounts: CloudAccount[];
-  stats: Record<string, PlaytimeData>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -266,44 +261,6 @@ export async function bindDeviceIfFree(
 }
 
 /* ------------------------------------------------------------------ */
-/* Estadísticas de juego por usuario                                    */
-/* ------------------------------------------------------------------ */
-
-/** Clave del documento de juego de un usuario. */
-export function statsDocKey(userId: string): string {
-  return `${DB_PREFIX}-u-${userId}`;
-}
-
-/** Última vez (epoch ms) que se subieron stats por usuario (throttle). */
-const lastPush = new Map<string, number>();
-
-/**
- * Sube los datos de juego del usuario a la nube.
- * `force` ignora el throttle (login, migración, cierre de pestaña).
- */
-export async function pushCloudStats(
-  userId: string,
-  data: PlaytimeData,
-  opts: { force?: boolean; keepalive?: boolean } = {}
-): Promise<boolean> {
-  if (!userId) return false;
-  const now = Date.now();
-  if (!opts.force) {
-    const last = lastPush.get(userId) ?? 0;
-    if (now - last < PUSH_MIN_INTERVAL_MS) return false;
-  }
-  lastPush.set(userId, now);
-  return writeDoc(statsDocKey(userId), data, 10_000, opts.keepalive);
-}
-
-/** Descarga los datos de juego de un usuario (null si no existen). */
-export async function fetchCloudStats(userId: string): Promise<PlaytimeData | null> {
-  const raw = await readDoc<PlaytimeData | null>(statsDocKey(userId));
-  if (!raw || typeof raw !== "object" || !raw.days) return null;
-  return raw;
-}
-
-/* ------------------------------------------------------------------ */
 /* Bandeja de entrada (entrega offline de amistad y mensajes)           */
 /* ------------------------------------------------------------------ */
 
@@ -463,22 +420,14 @@ export async function replaceInbox(userId: string, items: CloudInboxItem[]): Pro
 /* ------------------------------------------------------------------ */
 
 /**
- * Descarga el registro + las estadísticas de TODOS los usuarios en paralelo.
+ * Descarga el registro de TODOS los usuarios.
  * Guarda una caché local para render instantáneo la próxima vez.
  */
 export async function fetchCloudSnapshot(): Promise<CloudSnapshot | null> {
   const reg = await fetchRegistry(10_000);
   if (!reg) return null;
   const accounts = Object.values(reg.users);
-  const entries = await Promise.allSettled(
-    accounts.map((a) => fetchCloudStats(a.id))
-  );
-  const stats: Record<string, PlaytimeData> = {};
-  accounts.forEach((a, i) => {
-    const r = entries[i];
-    if (r.status === "fulfilled" && r.value) stats[a.id] = r.value;
-  });
-  const snapshot: CloudSnapshot = { fetchedAt: Date.now(), accounts, stats };
+  const snapshot: CloudSnapshot = { fetchedAt: Date.now(), accounts };
   try {
     localStorage.setItem(SNAPSHOT_CACHE, JSON.stringify(snapshot));
   } catch {
