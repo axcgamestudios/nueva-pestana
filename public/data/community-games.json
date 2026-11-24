@@ -478,5 +478,25 @@
     "players": "Nuevo",
     "difficulty": "Media",
     "accent": "#38bdf8"
+  },
+  {
+    "id": "galaga-2kxi",
+    "title": "Galaga",
+    "tagline": "Es un juego espacial",
+    "description": "galaga 3d. nuevo",
+    "longDescription": "Juego espacial de naves alienigenas",
+    "cover": "/games/community/galaga-2kxi.jpg",
+    "url": "https://silverlinegames.github.io/ga3d/",
+    "categories": [
+      "Acción"
+    ],
+    "tags": [
+      "Acción",
+      "Comunidad"
+    ],
+    "rating": 4.5,
+    "players": "Nuevo",
+    "difficulty": "Media",
+    "accent": "#a78bfa"
   }
 ]
